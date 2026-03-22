@@ -34,7 +34,7 @@ export interface TradeRequest {
 }
 
 const list = (): Promise<AxiosResponse<TradeResponse[]>> => {
-  return api.get("/api/api/trades");
+  return api.get("/api/trades");
 };
 
 const create = (trade: TradeRequest): Promise<AxiosResponse<TradeResponse>> => {
