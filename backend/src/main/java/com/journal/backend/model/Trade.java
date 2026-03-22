@@ -47,6 +47,10 @@ public class Trade {
     @Column(name = "stop_loss")
     private Double stopLoss;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "playbook_id")
+    private Playbook playbook;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
