@@ -21,6 +21,8 @@ public class TradeResponse {
     private LocalDateTime openedAt;
     private LocalDateTime closedAt;
     private Double stopLoss;
+    private UUID playbookId;
+    private String playbookTitle;
     private String notes;
     private Double pnl;
     private boolean open;

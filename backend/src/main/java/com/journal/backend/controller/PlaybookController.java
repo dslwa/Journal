@@ -1,0 +1,51 @@
+package com.journal.backend.controller;
+
+import com.journal.backend.dto.PlaybookRequest;
+import com.journal.backend.dto.PlaybookResponse;
+import com.journal.backend.model.User;
+import com.journal.backend.service.PlaybookService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/playbooks")
+@RequiredArgsConstructor
+public class PlaybookController {
+
+    private final PlaybookService playbookService;
+
+    @GetMapping
+    public ResponseEntity<List<PlaybookResponse>> list(Authentication auth) {
+        return ResponseEntity.ok(playbookService.list(getEmail(auth)));
+    }
+
+    @PostMapping
+    public ResponseEntity<PlaybookResponse> create(Authentication auth,
+                                                   @Valid @RequestBody PlaybookRequest request) {
+        return ResponseEntity.ok(playbookService.create(getEmail(auth), request));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PlaybookResponse> update(Authentication auth,
+                                                   @PathVariable UUID id,
+                                                   @Valid @RequestBody PlaybookRequest request) {
+        return ResponseEntity.ok(playbookService.update(getEmail(auth), id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(Authentication auth, @PathVariable UUID id) {
+        playbookService.delete(getEmail(auth), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private String getEmail(Authentication auth) {
+        User user = (User) auth.getPrincipal();
+        return user.getEmail();
+    }
+}
