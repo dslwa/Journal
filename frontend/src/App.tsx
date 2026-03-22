@@ -1,102 +1,45 @@
-import { useState } from 'react'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Layout from './components/Layout';
+import DashboardPage from './pages/DashboardPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import PlaybooksPage from './pages/PlaybooksPage';
+import TradesPage from './pages/TradesPage';
+import { AuthProvider } from './context/AuthContext';
+import { PlaybookProvider } from './context/PlaybookContext';
+import { TradeProvider } from './context/TradeContext';
+import PrivateRoute from './components/PrivateRoute';
+import theme from './theme';
 
 function App() {
-  const [isLogin, setIsLogin] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [username, setUsername] = useState('')
-  const [message, setMessage] = useState('')
-  const [token, setToken] = useState(localStorage.getItem('token'))
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setMessage('')
-
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register'
-    const body = isLogin
-      ? { email, password }
-      : { email, password, username }
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setMessage(data.message || 'Something went wrong')
-        return
-      }
-
-      localStorage.setItem('token', data.token)
-      setToken(data.token)
-      setMessage(`Welcome, ${data.username}!`)
-    } catch {
-      setMessage('Connection error')
-    }
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    setToken(null)
-    setMessage('')
-  }
-
-  if (token) {
-    return (
-      <div className="container">
-        <h1>Trading Journal</h1>
-        <p>You are logged in.</p>
-        <button onClick={handleLogout}>Logout</button>
-      </div>
-    )
-  }
-
+  console.log('App component rendering...');
   return (
-    <div className="container">
-      <h1>{isLogin ? 'Login' : 'Register'}</h1>
-
-      <form onSubmit={handleSubmit}>
-        {!isLogin && (
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            required
-          />
-        )}
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">{isLogin ? 'Login' : 'Register'}</button>
-      </form>
-
-      {message && <p className="message">{message}</p>}
-
-      <p className="switch">
-        {isLogin ? "Don't have an account? " : 'Already have an account? '}
-        <span onClick={() => { setIsLogin(!isLogin); setMessage('') }}>
-          {isLogin ? 'Register' : 'Login'}
-        </span>
-      </p>
-    </div>
-  )
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <AuthProvider>
+          <PlaybookProvider>
+            <TradeProvider>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route element={<Layout />}>
+                  <Route element={<PrivateRoute />}>
+                    <Route path="/" element={<Navigate to="/dashboard" />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/playbooks" element={<PlaybooksPage />} />
+                    <Route path="/trades" element={<TradesPage />} />
+                  </Route>
+                </Route>
+              </Routes>
+            </TradeProvider>
+          </PlaybookProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

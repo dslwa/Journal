@@ -10,7 +10,7 @@
 ```
 
 - Frontend: http://localhost:5173
-- Backend: http://localhost:8080
+- Backend: http://localhost:8081
 - Database: localhost:5443 (user: `postgres`, pass: `postgres`, db: `journal_db`)
 
 ## Stop

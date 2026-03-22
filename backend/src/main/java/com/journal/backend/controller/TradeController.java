@@ -22,6 +22,7 @@ public class TradeController {
 
     @GetMapping
     public ResponseEntity<List<TradeResponse>> list(Authentication auth) {
+        System.out.println("TradeController - list() called. User: " + getEmail(auth));
         return ResponseEntity.ok(tradeService.list(getEmail(auth)));
     }
 
