@@ -1,0 +1,1 @@
+ALTER TABLE trades ADD COLUMN playbook_id UUID REFERENCES playbooks(id) ON DELETE SET NULL;

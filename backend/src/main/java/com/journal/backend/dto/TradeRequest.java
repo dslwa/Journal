@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class TradeRequest {
@@ -29,5 +30,6 @@ public class TradeRequest {
 
     private LocalDateTime closedAt;
     private Double stopLoss;
+    private UUID playbookId;
     private String notes;
 }

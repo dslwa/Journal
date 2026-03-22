@@ -4,8 +4,10 @@ import com.journal.backend.dto.TradeRequest;
 import com.journal.backend.dto.TradeResponse;
 import com.journal.backend.exception.ResourceNotFoundException;
 import com.journal.backend.mapper.TradeMapper;
+import com.journal.backend.model.Playbook;
 import com.journal.backend.model.Trade;
 import com.journal.backend.model.User;
+import com.journal.backend.repository.PlaybookRepository;
 import com.journal.backend.repository.TradeRepository;
 import com.journal.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class TradeService {
 
     private final TradeRepository tradeRepository;
     private final UserRepository userRepository;
+    private final PlaybookRepository playbookRepository;
     private final TradeMapper tradeMapper;
 
     @Transactional(readOnly = true)
@@ -35,14 +38,16 @@ public class TradeService {
     @Transactional
     public TradeResponse create(String email, TradeRequest request) {
         User user = getUser(email);
-        Trade trade = tradeMapper.toEntity(user, request);
+        Playbook playbook = resolvePlaybook(request.getPlaybookId());
+        Trade trade = tradeMapper.toEntity(user, request, playbook);
         return tradeMapper.toResponse(tradeRepository.save(trade));
     }
 
     @Transactional
     public TradeResponse update(String email, UUID id, TradeRequest request) {
         Trade trade = getUserTrade(email, id);
-        tradeMapper.updateEntity(trade, request);
+        Playbook playbook = resolvePlaybook(request.getPlaybookId());
+        tradeMapper.updateEntity(trade, request, playbook);
         return tradeMapper.toResponse(tradeRepository.save(trade));
     }
 
@@ -61,5 +66,13 @@ public class TradeService {
         User user = getUser(email);
         return tradeRepository.findByIdAndUserId(tradeId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Trade", tradeId));
+    }
+
+    private Playbook resolvePlaybook(UUID playbookId) {
+        if (playbookId == null) {
+            return null;
+        }
+        return playbookRepository.findById(playbookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Playbook", playbookId));
     }
 }
