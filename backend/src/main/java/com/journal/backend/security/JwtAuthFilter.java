@@ -28,27 +28,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
+        System.out.println("JwtAuthFilter - Auth Header: " + authHeader);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("JwtAuthFilter - No Bearer token found. Skipping filter.");
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = authHeader.substring(7);
+        System.out.println("JwtAuthFilter - Extracted token: " + token);
 
         if (jwtUtil.isTokenValid(token)) {
+            System.out.println("JwtAuthFilter - Token is valid.");
             String email = jwtUtil.extractEmail(token);
+            System.out.println("JwtAuthFilter - Email from token: " + email);
 
-            userRepository.findByEmail(email).ifPresent(user -> {
+            userRepository.findByEmail(email).ifPresentOrElse(user -> {
+                System.out.println("JwtAuthFilter - User found: " + user.getEmail());
                 var auth = new UsernamePasswordAuthenticationToken(
                         user,
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
+            }, () -> {
+                System.out.println("JwtAuthFilter - User not found for email: " + email);
             });
+        } else {
+            System.out.println("JwtAuthFilter - Token is INVALID.");
         }
-
         filterChain.doFilter(request, response);
     }
 }
