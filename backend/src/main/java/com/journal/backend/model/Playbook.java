@@ -39,6 +39,15 @@ public class Playbook {
     @Column(name = "risk_note", columnDefinition = "TEXT")
     private String riskNote;
 
+    @Column(length = 500)
+    private String tags;
+
+    @Column(columnDefinition = "TEXT")
+    private String checklist;
+
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

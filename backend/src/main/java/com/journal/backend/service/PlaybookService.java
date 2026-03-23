@@ -11,17 +11,24 @@ import com.journal.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PlaybookService {
 
+    private static final Set<String> IMAGE_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp", "image/gif");
+
     private final PlaybookRepository playbookRepository;
     private final UserRepository userRepository;
     private final PlaybookMapper playbookMapper;
+    private final FileUploadService fileUploadService;
 
     @Transactional(readOnly = true)
     public List<PlaybookResponse> list(String email) {
@@ -44,6 +51,15 @@ public class PlaybookService {
         Playbook playbook = getUserPlaybook(email, id);
         playbookMapper.updateEntity(playbook, request);
         return playbookMapper.toResponse(playbookRepository.save(playbook));
+    }
+
+    @Transactional
+    public String uploadImage(String email, UUID id, MultipartFile image) throws IOException {
+        Playbook playbook = getUserPlaybook(email, id);
+        String url = fileUploadService.saveFile(image, IMAGE_TYPES);
+        playbook.setImageUrl(url);
+        playbookRepository.save(playbook);
+        return url;
     }
 
     @Transactional

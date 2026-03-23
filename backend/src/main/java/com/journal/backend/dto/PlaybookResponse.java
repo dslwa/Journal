@@ -19,6 +19,9 @@ public class PlaybookResponse {
     private String setup;
     private String timeframe;
     private String riskNote;
+    private String tags;
+    private String checklist;
+    private String imageUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

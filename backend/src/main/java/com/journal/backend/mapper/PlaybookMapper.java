@@ -18,6 +18,8 @@ public class PlaybookMapper {
                 .setup(request.getSetup())
                 .timeframe(request.getTimeframe())
                 .riskNote(request.getRiskNote())
+                .tags(request.getTags())
+                .checklist(request.getChecklist())
                 .build();
     }
 
@@ -28,6 +30,8 @@ public class PlaybookMapper {
         playbook.setSetup(request.getSetup());
         playbook.setTimeframe(request.getTimeframe());
         playbook.setRiskNote(request.getRiskNote());
+        playbook.setTags(request.getTags());
+        playbook.setChecklist(request.getChecklist());
     }
 
     public PlaybookResponse toResponse(Playbook playbook) {
@@ -39,6 +43,9 @@ public class PlaybookMapper {
                 .setup(playbook.getSetup())
                 .timeframe(playbook.getTimeframe())
                 .riskNote(playbook.getRiskNote())
+                .tags(playbook.getTags())
+                .checklist(playbook.getChecklist())
+                .imageUrl(playbook.getImageUrl())
                 .createdAt(playbook.getCreatedAt())
                 .updatedAt(playbook.getUpdatedAt())
                 .build();

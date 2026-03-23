@@ -1,5 +1,6 @@
 package com.journal.backend.controller;
 
+import com.journal.backend.repository.PlaybookRepository;
 import com.journal.backend.repository.TradeAttachmentRepository;
 import com.journal.backend.repository.UserRepository;
 import com.journal.backend.model.User;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 public class FileController {
 
     private final TradeAttachmentRepository attachmentRepository;
+    private final PlaybookRepository playbookRepository;
     private final UserRepository userRepository;
 
     @Value("${app.upload.dir}")
@@ -42,8 +44,9 @@ public class FileController {
 
         String fileUrl = "/files/" + filename;
 
-        boolean ownsFile = attachmentRepository.existsByUrlAndTradeUserId(fileUrl, user.getId());
-        if (!ownsFile) {
+        boolean ownsAttachment = attachmentRepository.existsByUrlAndTradeUserId(fileUrl, user.getId());
+        boolean ownsPlaybookImage = playbookRepository.existsByImageUrlAndUserId(fileUrl, user.getId());
+        if (!ownsAttachment && !ownsPlaybookImage) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 

@@ -1,0 +1,3 @@
+ALTER TABLE playbooks ADD COLUMN tags VARCHAR(500);
+ALTER TABLE playbooks ADD COLUMN checklist TEXT;
+ALTER TABLE playbooks ADD COLUMN image_url VARCHAR(1000);

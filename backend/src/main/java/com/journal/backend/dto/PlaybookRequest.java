@@ -14,4 +14,6 @@ public class PlaybookRequest {
     private String setup;
     private String timeframe;
     private String riskNote;
+    private String tags;
+    private String checklist;
 }

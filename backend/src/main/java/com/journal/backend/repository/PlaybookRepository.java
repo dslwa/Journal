@@ -12,4 +12,6 @@ public interface PlaybookRepository extends JpaRepository<Playbook, UUID> {
     List<Playbook> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
 
     Optional<Playbook> findByIdAndUserId(UUID id, UUID userId);
+
+    boolean existsByImageUrlAndUserId(String imageUrl, UUID userId);
 }
