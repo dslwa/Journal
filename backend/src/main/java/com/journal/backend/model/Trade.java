@@ -54,6 +54,26 @@ public class Trade {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(length = 500)
+    private String tags;
+
+    private Integer rating;
+
+    @Column(name = "risk_percent")
+    private Double riskPercent;
+
+    @Column(name = "emotion_before", length = 50)
+    private String emotionBefore;
+
+    @Column(name = "emotion_after", length = 50)
+    private String emotionAfter;
+
+    @Column(name = "pre_trade_checklist", columnDefinition = "TEXT")
+    private String preTradeChecklist;
+
+    @Column(name = "post_trade_review", columnDefinition = "TEXT")
+    private String postTradeReview;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

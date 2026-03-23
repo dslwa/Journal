@@ -24,6 +24,13 @@ public class TradeResponse {
     private UUID playbookId;
     private String playbookTitle;
     private String notes;
+    private String tags;
+    private Integer rating;
+    private Double riskPercent;
+    private String emotionBefore;
+    private String emotionAfter;
+    private String preTradeChecklist;
+    private String postTradeReview;
     private Double pnl;
     private boolean open;
     private LocalDateTime createdAt;
