@@ -1,43 +1,30 @@
-import React from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
+import { useState, type ReactNode } from 'react';
+import Sidebar from './Sidebar';
 
-const Layout: React.FC = () => {
-  const { logout } = useAuth(); // logout teraz sam zarządza nawigacją
+interface LayoutProps {
+  children: ReactNode;
+}
 
-  const handleLogout = () => {
-    logout();
-  };
+export default function Layout({ children }: LayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography
-            variant="h6"
-            component={Link}
-            to="/"
-            sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}
-          >
-            Trading Journal
-          </Typography>
-          <Button color="inherit" component={Link} to="/playbooks">
-            Playbooks
-          </Button>
-          <Button color="inherit" component={Link} to="/trades">
-            Trades
-          </Button>
-          <Button color="inherit" onClick={handleLogout}>
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Container sx={{ mt: 4 }}>
-        <Outlet />
-      </Container>
-    </>
-  );
-};
+    <div className="page-layout">
+      <button
+        className="mobile-menu-btn"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Open menu"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" />
+        </svg>
+      </button>
 
-export default Layout;
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <main className="page-content">
+        {children}
+      </main>
+    </div>
+  );
+}
