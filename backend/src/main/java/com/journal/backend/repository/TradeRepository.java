@@ -12,4 +12,6 @@ public interface TradeRepository extends JpaRepository<Trade, UUID> {
     List<Trade> findAllByUserIdOrderByOpenedAtDesc(UUID userId);
 
     Optional<Trade> findByIdAndUserId(UUID id, UUID userId);
+
+    boolean existsByIdAndUserId(UUID id, UUID userId);
 }
