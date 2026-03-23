@@ -2,7 +2,6 @@ package com.journal.backend.controller;
 
 import com.journal.backend.dto.PlaybookRequest;
 import com.journal.backend.dto.PlaybookResponse;
-import com.journal.backend.model.User;
 import com.journal.backend.service.PlaybookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +44,6 @@ public class PlaybookController {
     }
 
     private String getEmail(Authentication auth) {
-        User user = (User) auth.getPrincipal();
-        return user.getEmail();
+        return (String) auth.getPrincipal();
     }
 }

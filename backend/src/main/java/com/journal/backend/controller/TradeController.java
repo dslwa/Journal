@@ -2,7 +2,6 @@ package com.journal.backend.controller;
 
 import com.journal.backend.dto.TradeRequest;
 import com.journal.backend.dto.TradeResponse;
-import com.journal.backend.model.User;
 import com.journal.backend.service.TradeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +44,6 @@ public class TradeController {
     }
 
     private String getEmail(Authentication auth) {
-        User user = (User) auth.getPrincipal();
-        return user.getEmail();
+        return (String) auth.getPrincipal();
     }
 }

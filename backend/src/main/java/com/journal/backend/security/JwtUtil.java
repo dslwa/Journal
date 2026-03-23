@@ -32,19 +32,19 @@ public class JwtUtil {
     }
 
     public String extractEmail(String token) {
-        return extractClaims(token).getSubject();
+        return parseClaims(token).getSubject();
     }
 
     public boolean isTokenValid(String token) {
         try {
-            extractClaims(token);
+            parseClaims(token);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private Claims extractClaims(String token) {
+    public Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
