@@ -1,0 +1,7 @@
+ALTER TABLE trades ADD COLUMN tags VARCHAR(500);
+ALTER TABLE trades ADD COLUMN rating INTEGER;
+ALTER TABLE trades ADD COLUMN risk_percent DOUBLE PRECISION;
+ALTER TABLE trades ADD COLUMN emotion_before VARCHAR(50);
+ALTER TABLE trades ADD COLUMN emotion_after VARCHAR(50);
+ALTER TABLE trades ADD COLUMN pre_trade_checklist TEXT;
+ALTER TABLE trades ADD COLUMN post_trade_review TEXT;

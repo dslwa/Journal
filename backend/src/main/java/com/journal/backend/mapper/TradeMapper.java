@@ -24,6 +24,13 @@ public class TradeMapper {
                 .stopLoss(request.getStopLoss())
                 .playbook(playbook)
                 .notes(request.getNotes())
+                .tags(request.getTags())
+                .rating(request.getRating())
+                .riskPercent(request.getRiskPercent())
+                .emotionBefore(request.getEmotionBefore())
+                .emotionAfter(request.getEmotionAfter())
+                .preTradeChecklist(request.getPreTradeChecklist())
+                .postTradeReview(request.getPostTradeReview())
                 .build();
     }
 
@@ -38,6 +45,13 @@ public class TradeMapper {
         trade.setStopLoss(request.getStopLoss());
         trade.setPlaybook(playbook);
         trade.setNotes(request.getNotes());
+        trade.setTags(request.getTags());
+        trade.setRating(request.getRating());
+        trade.setRiskPercent(request.getRiskPercent());
+        trade.setEmotionBefore(request.getEmotionBefore());
+        trade.setEmotionAfter(request.getEmotionAfter());
+        trade.setPreTradeChecklist(request.getPreTradeChecklist());
+        trade.setPostTradeReview(request.getPostTradeReview());
     }
 
     public TradeResponse toResponse(Trade trade) {
@@ -54,6 +68,13 @@ public class TradeMapper {
                 .playbookId(getPlaybookId(trade))
                 .playbookTitle(getPlaybookTitle(trade))
                 .notes(trade.getNotes())
+                .tags(trade.getTags())
+                .rating(trade.getRating())
+                .riskPercent(trade.getRiskPercent())
+                .emotionBefore(trade.getEmotionBefore())
+                .emotionAfter(trade.getEmotionAfter())
+                .preTradeChecklist(trade.getPreTradeChecklist())
+                .postTradeReview(trade.getPostTradeReview())
                 .pnl(calculatePnl(trade))
                 .open(trade.getClosedAt() == null)
                 .createdAt(trade.getCreatedAt())
