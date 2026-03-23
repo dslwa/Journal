@@ -29,9 +29,15 @@ public class User {
     @Column(nullable = false, length = 100)
     private String username;
 
+    @Column(name = "initial_balance")
+    private Double initialBalance;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @Column(nullable = false)
+    private Boolean disabled = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
