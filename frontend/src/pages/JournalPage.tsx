@@ -102,7 +102,7 @@ export default function JournalPage() {
           onClick={previousMonth}
           className="px-3 py-2 text-sm text-slate-300 hover:text-slate-100 border border-border-primary rounded-lg hover:bg-surface-secondary transition-colors"
         >
-          \u2190 Previous
+          {'\u2190'} Previous
         </button>
         <div className="text-lg font-semibold text-slate-100">{monthName}</div>
         <div className="flex gap-2">
@@ -116,7 +116,7 @@ export default function JournalPage() {
             onClick={nextMonth}
             className="px-3 py-2 text-sm text-slate-300 hover:text-slate-100 border border-border-primary rounded-lg hover:bg-surface-secondary transition-colors"
           >
-            Next \u2192
+            Next {'\u2192'}
           </button>
         </div>
       </div>

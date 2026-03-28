@@ -37,6 +37,7 @@ export interface Attachment {
 export interface Trade {
   id: UUID;
   ticker: string;
+  direction: 'LONG' | 'SHORT';
   entryPrice: number | null;
   exitPrice: number | null;
   positionSize: number | null;
