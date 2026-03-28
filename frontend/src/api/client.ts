@@ -2,7 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type {
   Trade, Playbook, Attachment, UUID, JournalEntry,
   MacroEvent, AdminUser, SystemStats, SystemConfigEntry,
-  MeResponse, PriceResponse,
+  MeResponse, PriceResponse, LongTermEntry,
 } from '@/types';
 
 const ORIGIN = import.meta.env.VITE_API_ORIGIN ?? '';
@@ -134,6 +134,18 @@ export const apiUploadPlaybookImage = (id: UUID, image: File) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
+
+// ── Long Term ─────────────────────────────────────
+export const apiListLongTermEntries = () => api.get<LongTermEntry[]>('/long-term');
+
+export const apiCreateLongTermEntry = (dto: Partial<LongTermEntry>) =>
+  api.post<LongTermEntry>('/long-term', dto);
+
+export const apiUpdateLongTermEntry = (id: UUID, dto: Partial<LongTermEntry>) =>
+  api.put<LongTermEntry>(`/long-term/${id}`, dto);
+
+export const apiDeleteLongTermEntry = (id: UUID) =>
+  api.delete(`/long-term/${id}`);
 
 // ── Journal ───────────────────────────────────────
 export const apiListJournalEntries = (from?: string, to?: string) => {
