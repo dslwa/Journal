@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import BalanceModal from '@/components/ui/BalanceModal';
+import TradeModal from '@/components/ui/TradeModal';
 import type { Trade, UUID } from '@/types';
 import { apiMe, apiListTrades, apiDeleteTrade, apiUpdateBalance, type MeResponse } from '@/api/client';
 import { useToast } from '@/contexts/ToastContext';
@@ -337,7 +338,22 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Modals - TradeModal will be added in a later branch */}
+      {opened && (
+        <TradeModal
+          trade={opened}
+          onClose={() => setOpened(undefined)}
+          onSaved={onSaved}
+          onDeleted={async (id) => { await onDeleted(id); setOpened(undefined); }}
+          currentBalance={stats.currentBalance}
+        />
+      )}
+      {newOpen && (
+        <TradeModal
+          onClose={() => setNewOpen(false)}
+          onSaved={onSaved}
+          currentBalance={stats.currentBalance}
+        />
+      )}
       {balanceModalOpen && (
         <BalanceModal
           currentBalance={stats.initialBalance}
