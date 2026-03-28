@@ -18,6 +18,7 @@ const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const CalendarPage = React.lazy(() => import('./pages/CalendarPage'));
 const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
 const PlaybookPage = React.lazy(() => import('./pages/PlaybookPage'));
+const LongTermPage = React.lazy(() => import('./pages/LongTermPage'));
 const JournalPage = React.lazy(() => import('./pages/JournalPage'));
 const AdminPage = React.lazy(() => import('./pages/AdminPage'));
 const ChartPage = React.lazy(() => import('./pages/ChartPage'));
@@ -56,6 +57,7 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="/analytics" element={<ProtectedPage><AnalyticsPage /></ProtectedPage>} />
                   <Route path="/journal" element={<ProtectedPage><JournalPage /></ProtectedPage>} />
                   <Route path="/playbook" element={<ProtectedPage><PlaybookPage /></ProtectedPage>} />
+                  <Route path="/long-term" element={<ProtectedPage><LongTermPage /></ProtectedPage>} />
                   <Route path="/chart" element={<ProtectedPage><ChartPage /></ProtectedPage>} />
                   <Route path="/admin" element={<ProtectedPage><AdminPage /></ProtectedPage>} />
                   <Route path="*" element={<Navigate to="/" replace />} />

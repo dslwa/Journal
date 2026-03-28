@@ -75,6 +75,31 @@ export interface Playbook {
   updatedAt: string;
 }
 
+export type LongTermCategory = 'THEME' | 'WATCHLIST' | 'GOAL' | 'REVIEW';
+
+export type LongTermStatus =
+  | 'ACTIVE'
+  | 'ON_WATCH'
+  | 'BUILDING'
+  | 'COMPLETED'
+  | 'INVALIDATED';
+
+export interface LongTermEntry {
+  id: UUID;
+  title: string;
+  category: LongTermCategory;
+  status: LongTermStatus;
+  asset: string | null;
+  horizon: string | null;
+  thesis: string | null;
+  triggerPlan: string | null;
+  invalidation: string | null;
+  notes: string | null;
+  targetDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Journal
 export interface JournalEntry {
   id?: UUID;
