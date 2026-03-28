@@ -178,7 +178,7 @@ export default function JournalPage() {
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-6 mb-8 text-xs text-slate-400">
             <div className="flex items-center gap-2">
-              <span className="text-base">\u{1F604}</span>
+              <span className="text-base">{'\u{1F604}'}</span>
               <span>Mood indicator</span>
             </div>
             <div className="flex items-center gap-2">
