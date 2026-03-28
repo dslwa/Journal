@@ -15,7 +15,7 @@ const ConfirmContext = createContext<ConfirmContextValue | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
-  const resolveRef = useRef<(value: boolean) => void>();
+  const resolveRef = useRef<((value: boolean) => void) | null>(null);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
 
   const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {

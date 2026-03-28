@@ -14,7 +14,7 @@ public class PlaybookMapper {
                 .user(user)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .rules(request.getRules())
+                .rules(resolveContent(request))
                 .setup(request.getSetup())
                 .timeframe(request.getTimeframe())
                 .riskNote(request.getRiskNote())
@@ -26,7 +26,7 @@ public class PlaybookMapper {
     public void updateEntity(Playbook playbook, PlaybookRequest request) {
         playbook.setTitle(request.getTitle());
         playbook.setDescription(request.getDescription());
-        playbook.setRules(request.getRules());
+        playbook.setRules(resolveContent(request));
         playbook.setSetup(request.getSetup());
         playbook.setTimeframe(request.getTimeframe());
         playbook.setRiskNote(request.getRiskNote());
@@ -39,6 +39,7 @@ public class PlaybookMapper {
                 .id(playbook.getId())
                 .title(playbook.getTitle())
                 .description(playbook.getDescription())
+                .content(playbook.getRules() == null ? "" : playbook.getRules())
                 .rules(playbook.getRules())
                 .setup(playbook.getSetup())
                 .timeframe(playbook.getTimeframe())
@@ -49,5 +50,9 @@ public class PlaybookMapper {
                 .createdAt(playbook.getCreatedAt())
                 .updatedAt(playbook.getUpdatedAt())
                 .build();
+    }
+
+    private String resolveContent(PlaybookRequest request) {
+        return request.getContent() != null ? request.getContent() : request.getRules();
     }
 }

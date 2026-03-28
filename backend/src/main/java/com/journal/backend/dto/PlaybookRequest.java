@@ -10,6 +10,7 @@ public class PlaybookRequest {
     private String title;
 
     private String description;
+    private String content;
     private String rules;
     private String setup;
     private String timeframe;
