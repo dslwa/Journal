@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type {
   Trade, Playbook, Attachment, UUID, JournalEntry,
   MacroEvent, AdminUser, SystemStats, SystemConfigEntry,
@@ -10,6 +10,25 @@ const ORIGIN = import.meta.env.VITE_API_ORIGIN ?? '';
 const api = axios.create({
   baseURL: `${ORIGIN}/api`,
 });
+
+const MAX_STARTUP_RETRIES = 3;
+const RETRYABLE_STATUSES = new Set([502, 503, 504]);
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retryCount?: number;
+};
+
+const wait = (ms: number) =>
+  new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const isRetryableStartupError = (err: AxiosError) => {
+  const config = err.config as RetryableRequestConfig | undefined;
+  const method = config?.method?.toLowerCase();
+  if (!config || method !== 'get') return false;
+
+  const status = err.response?.status;
+  return RETRYABLE_STATUSES.has(status ?? 0) || err.code === 'ERR_NETWORK' || !err.response;
+};
 
 // Attach JWT to every request
 api.interceptors.request.use((config) => {
@@ -24,13 +43,24 @@ api.interceptors.request.use((config) => {
 // Auto-logout on 401
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err: AxiosError) => {
     if (err?.response?.status === 401) {
       localStorage.removeItem('jwt');
       if (!location.pathname.startsWith('/login') && location.pathname !== '/') {
         location.href = '/';
       }
     }
+
+    if (isRetryableStartupError(err)) {
+      const config = err.config as RetryableRequestConfig;
+      config._retryCount = (config._retryCount ?? 0) + 1;
+
+      if (config._retryCount <= MAX_STARTUP_RETRIES) {
+        await wait(config._retryCount * 700);
+        return api.request(config);
+      }
+    }
+
     return Promise.reject(err);
   },
 );
@@ -87,20 +117,20 @@ export const apiDeleteAttachment = (tradeId: UUID, attId: UUID) =>
   api.delete(`/trades/${tradeId}/attachments/${attId}`);
 
 // ── Playbook ──────────────────────────────────────
-export const apiListPlaybook = () => api.get<Playbook[]>('/playbook');
+export const apiListPlaybook = () => api.get<Playbook[]>('/playbooks');
 
 export const apiCreatePlaybook = (dto: Partial<Playbook>) =>
-  api.post<Playbook>('/playbook', dto);
+  api.post<Playbook>('/playbooks', dto);
 
 export const apiUpdatePlaybook = (id: UUID, dto: Partial<Playbook>) =>
-  api.put<Playbook>(`/playbook/${id}`, dto);
+  api.put<Playbook>(`/playbooks/${id}`, dto);
 
-export const apiDeletePlaybook = (id: UUID) => api.delete(`/playbook/${id}`);
+export const apiDeletePlaybook = (id: UUID) => api.delete(`/playbooks/${id}`);
 
 export const apiUploadPlaybookImage = (id: UUID, image: File) => {
   const fd = new FormData();
   fd.append('image', image);
-  return api.post<{ imageUrl: string }>(`/playbook/${id}/image`, fd, {
+  return api.post<{ imageUrl: string }>(`/playbooks/${id}/image`, fd, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };

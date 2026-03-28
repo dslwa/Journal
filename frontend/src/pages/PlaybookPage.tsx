@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiListPlaybook, apiCreatePlaybook, apiUpdatePlaybook, apiDeletePlaybook, apiUploadPlaybookImage, fileUrl } from '@/api/client';
 import type { Playbook, UUID } from '@/types';
 import Layout from '@/components/layout/Layout';
@@ -7,6 +7,10 @@ import remarkGfm from 'remark-gfm';
 import { useToast } from '@/contexts/ToastContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { AxiosError } from 'axios';
+
+const AUTO_RETRY_LIMIT = 3;
+const AUTO_RETRY_DELAY_MS = 2000;
 
 const inputCls = `w-full bg-surface border border-border-primary text-slate-100 px-3 py-2.5
   rounded-lg text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 placeholder:text-slate-500`;
@@ -14,6 +18,8 @@ const inputCls = `w-full bg-surface border border-border-primary text-slate-100 
 export default function PlaybookPage() {
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [isWaitingForRetry, setIsWaitingForRetry] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -25,10 +31,22 @@ export default function PlaybookPage() {
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const { showToast } = useToast();
   const { confirm } = useConfirm();
+  const retryTimeoutRef = useRef<number | null>(null);
 
   const [form, setForm] = useState({ title: '', description: '', content: '', tags: '', imageUrl: '', checklist: '[]' });
 
-  useEffect(() => { loadPlaybooks(); }, []);
+  const getPlaybookContent = (pb: Playbook) => typeof pb.content === 'string' ? pb.content : '';
+  const getPreviewContent = (pb: Playbook) => {
+    const content = getPlaybookContent(pb);
+    return content.length > 200 ? `${content.slice(0, 200)}...` : content;
+  };
+
+  useEffect(() => {
+    void loadPlaybooks();
+    return () => {
+      if (retryTimeoutRef.current !== null) window.clearTimeout(retryTimeoutRef.current);
+    };
+  }, []);
   useEscapeKey(showModal ? closeModal : null);
 
   const filteredPlaybooks = useMemo(() => {
@@ -37,11 +55,47 @@ export default function PlaybookPage() {
     return playbooks.filter(p => p.title.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q) || p.tags?.toLowerCase().includes(q));
   }, [playbooks, searchQuery]);
 
-  const loadPlaybooks = async () => {
-    setLoading(true);
-    try { setPlaybooks((await apiListPlaybook()).data); }
-    finally { setLoading(false); }
+  const getLoadErrorMessage = (err: unknown, willRetry: boolean) => {
+    const axErr = err as AxiosError<{ message?: string }>;
+    const status = axErr?.response?.status;
+    const apiMessage = axErr?.response?.data?.message;
+
+    if (status === 502 || axErr?.code === 'ERR_NETWORK' || !axErr?.response) {
+      return willRetry
+        ? 'Backend is starting up. Retrying automatically...'
+        : 'Cannot reach the backend right now. It may still be starting. Try again in a moment.';
+    }
+
+    return apiMessage || axErr?.message || 'Failed to load strategies.';
   };
+
+  const shouldRetryLoad = (err: unknown) => {
+    const axErr = err as AxiosError;
+    return axErr?.response?.status === 502 || axErr?.code === 'ERR_NETWORK' || !axErr?.response;
+  };
+
+  const loadPlaybooks = async (attempt = 0) => {
+    if (retryTimeoutRef.current !== null) {
+      window.clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    setLoading(true);
+    setIsWaitingForRetry(false);
+    if (attempt === 0) setLoadError('');
+    try {
+      setPlaybooks((await apiListPlaybook()).data);
+      setLoadError('');
+    } catch (err) {
+      const willRetry = shouldRetryLoad(err) && attempt < AUTO_RETRY_LIMIT - 1;
+      setLoadError(getLoadErrorMessage(err, willRetry));
+      if (willRetry) {
+        setIsWaitingForRetry(true);
+        retryTimeoutRef.current = window.setTimeout(() => { void loadPlaybooks(attempt + 1); }, AUTO_RETRY_DELAY_MS);
+      }
+    } finally { setLoading(false); }
+  };
+
+  const retryLoad = () => { void loadPlaybooks(); };
 
   const openNew = () => {
     setForm({ title: '', description: '', content: '', tags: '', imageUrl: '', checklist: '[]' });
@@ -51,7 +105,7 @@ export default function PlaybookPage() {
   const openView = (pb: Playbook) => { setSelectedPlaybook(pb); setIsEditing(false); setIsViewMode(true); setShowModal(true); };
 
   const openEdit = (pb: Playbook) => {
-    setForm({ title: pb.title, description: pb.description || '', content: pb.content, tags: pb.tags || '', imageUrl: pb.imageUrl || '', checklist: pb.checklist || '[]' });
+    setForm({ title: pb.title, description: pb.description || '', content: getPlaybookContent(pb), tags: pb.tags || '', imageUrl: pb.imageUrl || '', checklist: pb.checklist || '[]' });
     setNewChecklistItem(''); setSelectedPlaybook(pb); setIsEditing(true); setIsViewMode(false); setPreviewTab('edit'); setShowModal(true);
   };
 
@@ -131,8 +185,28 @@ export default function PlaybookPage() {
         </div>
       )}
 
+      {loadError && playbooks.length > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-amber-100">{loadError}</p>
+            <button onClick={retryLoad} className="px-3 py-1.5 rounded-lg border border-amber-400/30 text-xs font-medium text-amber-100 hover:bg-amber-500/10">
+              Retry now
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center gap-3 py-20 text-slate-400"><div className="spinner" /> Loading playbook...</div>
+      ) : loadError && playbooks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="text-4xl mb-4">{isWaitingForRetry ? '\u23F3' : '\u26A0\uFE0F'}</div>
+          <div className="text-base font-medium text-slate-300 mb-1">Could not load strategies</div>
+          <div className="text-sm text-slate-500 mb-4 max-w-md">{loadError}</div>
+          <button onClick={retryLoad} className="px-4 py-2 bg-brand text-white rounded-lg text-sm font-semibold hover:bg-brand-hover">
+            Retry now
+          </button>
+        </div>
       ) : playbooks.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="text-4xl mb-4">📋</div>
@@ -166,7 +240,7 @@ export default function PlaybookPage() {
                 </div>
                 {pb.description && <p className="text-xs text-slate-400 mb-2 line-clamp-2">{pb.description}</p>}
                 <div className="text-xs text-slate-500 line-clamp-3 mb-3 markdown-content">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{pb.content.slice(0, 200) + (pb.content.length > 200 ? '...' : '')}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{getPreviewContent(pb)}</ReactMarkdown>
                 </div>
                 {pb.tags && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
@@ -223,7 +297,7 @@ export default function PlaybookPage() {
                 return null;
               })()}
               <div className="markdown-content text-slate-200">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedPlaybook.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{getPlaybookContent(selectedPlaybook) || '*No content yet*'}</ReactMarkdown>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-border-primary">

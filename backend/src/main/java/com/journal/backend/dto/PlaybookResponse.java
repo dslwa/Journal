@@ -15,6 +15,7 @@ public class PlaybookResponse {
     private UUID id;
     private String title;
     private String description;
+    private String content;
     private String rules;
     private String setup;
     private String timeframe;

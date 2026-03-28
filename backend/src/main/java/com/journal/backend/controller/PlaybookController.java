@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/playbooks")
+@RequestMapping({"/api/playbooks", "/api/playbook"})
 @RequiredArgsConstructor
 public class PlaybookController {
 
