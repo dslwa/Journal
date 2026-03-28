@@ -29,6 +29,8 @@ services:
     container_name: journal-frontend
     ports:
       - "5173:5173"
+    environment:
+      BACKEND_URL: http://backend:8080
     depends_on:
       - backend
 

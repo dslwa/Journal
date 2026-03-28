@@ -114,13 +114,13 @@ export default function CalendarPage() {
       {/* Calendar navigation */}
       <div className="flex items-center justify-between mb-6">
         <button onClick={previousMonth} className="px-3 py-2 text-sm text-slate-300 hover:text-slate-100 border border-border-primary rounded-lg hover:bg-surface-secondary transition-colors">
-          \u2190 Previous
+          {'\u2190'} Previous
         </button>
         <div className="text-lg font-semibold text-slate-100">{monthName}</div>
         <div className="flex gap-2">
           <button onClick={goToToday} className="px-3 py-2 text-sm bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors">Today</button>
           <button onClick={nextMonth} className="px-3 py-2 text-sm text-slate-300 hover:text-slate-100 border border-border-primary rounded-lg hover:bg-surface-secondary transition-colors">
-            Next \u2192
+            Next {'\u2192'}
           </button>
         </div>
       </div>
@@ -237,7 +237,7 @@ export default function CalendarPage() {
                 {selectedDay.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </h2>
               <button className="w-8 h-8 rounded-lg border border-border-primary flex items-center justify-center text-slate-100 hover:bg-surface-secondary" onClick={() => setSelectedDay(null)}>
-                \u2715
+                {'\u2715'}
               </button>
             </div>
 

@@ -42,8 +42,8 @@ export const fileUrl = (path: string) =>
   path.startsWith('http') ? path : `${ORIGIN}${path}`;
 
 // ── Auth ──────────────────────────────────────────
-export const apiLogin = (username: string, password: string) =>
-  api.post<{ token: string }>('/auth/login', { username, password });
+export const apiLogin = (email: string, password: string) =>
+  api.post<{ token: string }>('/auth/login', { email, password });
 
 export const apiRegister = (username: string, email: string, password: string) =>
   api.post<{ token: string }>('/auth/register', { username, email, password });

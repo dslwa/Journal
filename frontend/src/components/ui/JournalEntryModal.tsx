@@ -52,7 +52,7 @@ export default function JournalEntryModal({ entry, date, onClose, onSave, onDele
             onClick={onClose}
             aria-label="Close"
           >
-            \u2715
+            {'\u2715'}
           </button>
         </div>
 

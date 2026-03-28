@@ -23,7 +23,7 @@ export default function AuthPage() {
     try {
       const res =
         mode === 'login'
-          ? await apiLogin(username, password)
+          ? await apiLogin(email, password)
           : await apiRegister(username, email, password);
 
       localStorage.setItem('jwt', res.data.token);
@@ -86,40 +86,40 @@ export default function AuthPage() {
 
         {/* Form */}
         <form onSubmit={submit}>
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-slate-100 mb-2">
-              Username
-            </label>
-            <input
-              className="w-full bg-surface border border-border-primary text-slate-100 px-3.5 py-2.5
-                rounded-lg text-sm outline-none transition-all
-                focus:border-brand focus:ring-2 focus:ring-brand/15 placeholder:text-slate-500"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              autoComplete="username"
-              required
-            />
-          </div>
-
           {mode === 'register' && (
             <div className="mb-5">
               <label className="block text-sm font-medium text-slate-100 mb-2">
-                Email
+                Username
               </label>
               <input
                 className="w-full bg-surface border border-border-primary text-slate-100 px-3.5 py-2.5
                   rounded-lg text-sm outline-none transition-all
                   focus:border-brand focus:ring-2 focus:ring-brand/15 placeholder:text-slate-500"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                autoComplete="email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                autoComplete="username"
                 required
               />
             </div>
           )}
+
+          <div className="mb-5">
+            <label className="block text-sm font-medium text-slate-100 mb-2">
+              Email
+            </label>
+            <input
+              className="w-full bg-surface border border-border-primary text-slate-100 px-3.5 py-2.5
+                rounded-lg text-sm outline-none transition-all
+                focus:border-brand focus:ring-2 focus:ring-brand/15 placeholder:text-slate-500"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              autoComplete="email"
+              required
+            />
+          </div>
 
           <div className="mb-5">
             <div className="flex justify-between items-center mb-2">

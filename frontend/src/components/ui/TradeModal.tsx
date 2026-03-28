@@ -41,6 +41,7 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
   const [data, setData] = useState<Editable>(() => ({
     id: trade?.id,
     ticker: trade?.ticker ?? '',
+    direction: trade?.direction ?? 'LONG',
     entryPrice: trade?.entryPrice ?? null,
     exitPrice: trade?.exitPrice ?? null,
     positionSize: trade?.positionSize ?? null,
@@ -109,7 +110,8 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
     setBusy(true);
     try {
       const payload = {
-        ticker: data.ticker, entryPrice: data.entryPrice, exitPrice: data.exitPrice,
+        ticker: data.ticker, direction: data.direction,
+        entryPrice: data.entryPrice, exitPrice: data.exitPrice,
         positionSize: data.positionSize, openedAt: data.openedAt, closedAt: data.closedAt,
         notes: data.notes || null, tags: data.tags || null, rating: data.rating,
         riskPercent: data.riskPercent, stopLoss: data.stopLoss,
@@ -248,18 +250,14 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
           {/* Direction */}
           <Field label="Direction">
             <div className="flex gap-3">
-              <button type="button" onClick={() => {
-                const tags = data.tags?.split(',').map(t => t.trim()).filter(Boolean) || [];
-                update('tags', [...tags.filter(t => t !== 'Long' && t !== 'Short'), 'Long'].join(', '));
-              }} className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all
-                ${data.tags?.includes('Long') ? 'border-success bg-success/10 text-success' : 'border-border-primary text-slate-400 hover:border-border-light'}`}>
+              <button type="button" onClick={() => update('direction', 'LONG')}
+                className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all
+                ${data.direction === 'LONG' ? 'border-success bg-success/10 text-success' : 'border-border-primary text-slate-400 hover:border-border-light'}`}>
                 Long
               </button>
-              <button type="button" onClick={() => {
-                const tags = data.tags?.split(',').map(t => t.trim()).filter(Boolean) || [];
-                update('tags', [...tags.filter(t => t !== 'Long' && t !== 'Short'), 'Short'].join(', '));
-              }} className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all
-                ${data.tags?.includes('Short') ? 'border-danger bg-danger/10 text-danger' : 'border-border-primary text-slate-400 hover:border-border-light'}`}>
+              <button type="button" onClick={() => update('direction', 'SHORT')}
+                className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all
+                ${data.direction === 'SHORT' ? 'border-danger bg-danger/10 text-danger' : 'border-border-primary text-slate-400 hover:border-border-light'}`}>
                 Short
               </button>
             </div>
