@@ -1,17 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import path from 'node:path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
-    host: '0.0.0.0', // potrzebne zeby Vite sluchal poza kontenerem
+    host: '0.0.0.0',
     port: 5173,
     proxy: {
-      // Requesty na /api/* przekierowuje do backendu
       '/api': {
-        target: 'http://backend:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/files': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 })
