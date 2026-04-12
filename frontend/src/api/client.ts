@@ -71,7 +71,6 @@ export default api;
 export const fileUrl = (path: string) =>
   path.startsWith('http') ? path : `${ORIGIN}${path}`;
 
-// ── Auth ──────────────────────────────────────────
 export const apiLogin = (email: string, password: string) =>
   api.post<{ token: string }>('/auth/login', { email, password });
 
@@ -84,13 +83,11 @@ export const apiForgotPassword = (email: string) =>
 export const apiResetPassword = (token: string, newPassword: string) =>
   api.post('/auth/reset-password', { token, newPassword });
 
-// ── User ──────────────────────────────────────────
 export const apiMe = () => api.get<MeResponse>('/me');
 
 export const apiUpdateBalance = (initialBalance: number) =>
   api.put<MeResponse>('/users/balance', { initialBalance });
 
-// ── Trades ────────────────────────────────────────
 export const apiListTrades = () => api.get<Trade[]>('/trades');
 
 export const apiCreateTrade = (dto: Partial<Trade>) =>
@@ -101,7 +98,6 @@ export const apiUpdateTrade = (id: UUID, dto: Partial<Trade>) =>
 
 export const apiDeleteTrade = (id: UUID) => api.delete(`/trades/${id}`);
 
-// ── Attachments ───────────────────────────────────
 export const apiListAttachments = (tradeId: UUID) =>
   api.get<Attachment[]>(`/trades/${tradeId}/attachments`);
 
@@ -116,7 +112,6 @@ export const apiUploadAttachments = (tradeId: UUID, files: File[]) => {
 export const apiDeleteAttachment = (tradeId: UUID, attId: UUID) =>
   api.delete(`/trades/${tradeId}/attachments/${attId}`);
 
-// ── Playbook ──────────────────────────────────────
 export const apiListPlaybook = () => api.get<Playbook[]>('/playbooks');
 
 export const apiCreatePlaybook = (dto: Partial<Playbook>) =>
@@ -135,7 +130,6 @@ export const apiUploadPlaybookImage = (id: UUID, image: File) => {
   });
 };
 
-// ── Long Term ─────────────────────────────────────
 export const apiListLongTermEntries = () => api.get<LongTermEntry[]>('/long-term');
 
 export const apiCreateLongTermEntry = (dto: Partial<LongTermEntry>) =>
@@ -147,7 +141,6 @@ export const apiUpdateLongTermEntry = (id: UUID, dto: Partial<LongTermEntry>) =>
 export const apiDeleteLongTermEntry = (id: UUID) =>
   api.delete(`/long-term/${id}`);
 
-// ── Journal ───────────────────────────────────────
 export const apiListJournalEntries = (from?: string, to?: string) => {
   const params = from && to ? { from, to } : {};
   return api.get<JournalEntry[]>('/journal', { params });
@@ -162,11 +155,9 @@ export const apiSaveJournalEntry = (dto: Partial<JournalEntry>) =>
 export const apiDeleteJournalEntry = (date: string) =>
   api.delete(`/journal/${date}`);
 
-// ── Macro Events ──────────────────────────────────
 export const apiGetMacroEvents = (from: string, to: string) =>
   api.get<MacroEvent[]>('/macro-events', { params: { from, to } });
 
-// ── Admin ─────────────────────────────────────────
 export const apiAdminListUsers = () => api.get<AdminUser[]>('/admin/users');
 
 export const apiAdminDisableUser = (id: string) =>
@@ -186,6 +177,5 @@ export const apiAdminGetConfig = () =>
 export const apiAdminUpdateConfig = (entries: SystemConfigEntry[]) =>
   api.put('/admin/config', entries);
 
-// ── Market Data ───────────────────────────────────
 export const apiGetPrice = (symbol: string) =>
   api.get<PriceResponse>(`/market/price/${symbol}`);

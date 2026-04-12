@@ -19,6 +19,9 @@ public class MarketDataService {
     @Value("${finnhub.api.key:demo}")
     private String finnhubApiKey;
 
+    @Value("${exchangerate.api.key:}")
+    private String exchangeRateApiKey;
+
     public Double getCurrentPrice(String symbol) {
         String normalized = normalizeSymbol(symbol);
         try {
@@ -38,10 +41,14 @@ public class MarketDataService {
             if (symbol.length() != 6) return null;
             String base = symbol.substring(0, 3);
             String quote = symbol.substring(3, 6);
-            String url = String.format("https://api.exchangerate-api.com/v4/latest/%s", base);
+            String url = exchangeRateApiKey != null && !exchangeRateApiKey.isBlank()
+                    ? String.format("https://v6.exchangerate-api.com/v6/%s/latest/%s", exchangeRateApiKey, base)
+                    : String.format("https://api.exchangerate-api.com/v4/latest/%s", base);
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-            if (response != null && response.containsKey("rates")) {
-                Map<String, Object> rates = (Map<String, Object>) response.get("rates");
+            String ratesKey = response != null && response.containsKey("conversion_rates")
+                    ? "conversion_rates" : "rates";
+            if (response != null && response.containsKey(ratesKey)) {
+                Map<String, Object> rates = (Map<String, Object>) response.get(ratesKey);
                 Object rate = rates.get(quote);
                 if (rate != null) return ((Number) rate).doubleValue();
             }
