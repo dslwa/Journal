@@ -14,6 +14,7 @@ COPY --from=build /app/target/*.jar app.jar
 RUN mkdir -p /app/uploads
 
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
+ENV SPRING_PROFILES_ACTIVE=prod
 
 EXPOSE 8080
 
