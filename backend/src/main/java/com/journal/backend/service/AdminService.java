@@ -30,6 +30,8 @@ public class AdminService {
     private final SystemConfigRepository systemConfigRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // Pobiera listę wszystkich użytkowników w systemie wraz ze statystykami:
+    // liczba transakcji, liczba wpisów dziennika, data ostatniej transakcji
     @Transactional(readOnly = true)
     public List<AdminUserDto> listUsers() {
         return userRepository.findAll().stream().map(user -> {
@@ -44,6 +46,8 @@ public class AdminService {
         }).toList();
     }
 
+    // Przełącza flagę "disabled" konta użytkownika (blokuje/odblokowuje logowanie).
+    // Admin nie może zablokować własnego konta — blokada przed odcięciem się od systemu
     @Transactional
     public void disableUser(String adminEmail, UUID userId) {
         User user = userRepository.findById(userId)
@@ -55,6 +59,8 @@ public class AdminService {
         userRepository.save(user);
     }
 
+    // Trwale usuwa konto użytkownika wraz z powiązanymi danymi (kaskada DB).
+    // Admin nie może usunąć własnego konta
     @Transactional
     public void deleteUser(String adminEmail, UUID userId) {
         User user = userRepository.findById(userId)
@@ -65,6 +71,7 @@ public class AdminService {
         userRepository.delete(user);
     }
 
+    // Awaryjny reset hasła użytkownika przez admina — hashuje nowe hasło algorytmem BCrypt
     @Transactional
     public void resetUserPassword(UUID userId, String newPassword) {
         User user = userRepository.findById(userId)
@@ -73,6 +80,8 @@ public class AdminService {
         userRepository.save(user);
     }
 
+    // Liczy zagregowane statystyki systemu: liczba kont, użytkownicy aktywni w ostatnich 30 dniach,
+    // łączna liczba transakcji i wpisów dziennika oraz średnia liczba transakcji na użytkownika
     @Transactional(readOnly = true)
     public SystemStatsDto getStats() {
         long totalUsers = userRepository.count();
@@ -84,6 +93,7 @@ public class AdminService {
         return new SystemStatsDto(totalUsers, activeUsers, totalTrades, totalJournalEntries, avgTradesPerUser);
     }
 
+    // Zwraca wszystkie wpisy konfiguracji systemowej (klucz–wartość) z bazy
     @Transactional(readOnly = true)
     public List<SystemConfigDto> getConfig() {
         return systemConfigRepository.findAll().stream()
@@ -91,6 +101,8 @@ public class AdminService {
                 .toList();
     }
 
+    // Zapisuje (upsert) listę wpisów konfiguracji systemowej — istniejące klucze są nadpisywane,
+    // nowe są tworzone
     @Transactional
     public void updateConfig(List<SystemConfigDto> entries) {
         for (SystemConfigDto dto : entries) {

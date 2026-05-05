@@ -34,6 +34,8 @@ public class TradeService {
     private final TradeMapper tradeMapper;
     private final FileUploadService fileUploadService;
 
+    // Pobiera listę wszystkich transakcji użytkownika posortowanych od najnowszej,
+    // mapuje je na obiekty odpowiedzi TradeResponse
     @Transactional(readOnly = true)
     public List<TradeResponse> list(String email) {
         User user = getUser(email);
@@ -43,6 +45,8 @@ public class TradeService {
                 .toList();
     }
 
+    // Tworzy nową transakcję dla użytkownika — rozwiązuje powiązany playbook (jeśli podano),
+    // mapuje dane z żądania na encję Trade i zapisuje w bazie
     @Transactional
     public TradeResponse create(String email, TradeRequest request) {
         User user = getUser(email);
@@ -51,6 +55,8 @@ public class TradeService {
         return tradeMapper.toResponse(tradeRepository.save(trade));
     }
 
+    // Aktualizuje istniejącą transakcję — sprawdza czy należy do użytkownika,
+    // aktualizuje wszystkie pola i zapisuje zmiany
     @Transactional
     public TradeResponse update(String email, UUID id, TradeRequest request) {
         Trade trade = getUserTrade(email, id);
@@ -59,6 +65,7 @@ public class TradeService {
         return tradeMapper.toResponse(tradeRepository.save(trade));
     }
 
+    // Usuwa transakcję wraz ze wszystkimi jej załącznikami (plikami z dysku i rekordami z bazy)
     @Transactional
     public void delete(String email, UUID id) throws IOException {
         Trade trade = getUserTrade(email, id);
@@ -68,6 +75,7 @@ public class TradeService {
         tradeRepository.delete(trade);
     }
 
+    // Pobiera listę załączników (obrazków) przypisanych do danej transakcji użytkownika
     @Transactional(readOnly = true)
     public List<AttachmentDto> listAttachments(String email, UUID tradeId) {
         ensureOwned(email, tradeId);
@@ -75,6 +83,8 @@ public class TradeService {
                 .map(this::toAttachmentDto).toList();
     }
 
+    // Przesyła pliki graficzne jako załączniki do transakcji — waliduje typ pliku
+    // (tylko JPEG, PNG, WebP, GIF), zapisuje na dysku i tworzy rekordy w bazie
     @Transactional
     public List<AttachmentDto> uploadAttachments(String email, UUID tradeId, List<MultipartFile> files) throws IOException {
         ensureOwned(email, tradeId);
@@ -100,6 +110,8 @@ public class TradeService {
         return saved.stream().map(this::toAttachmentDto).toList();
     }
 
+    // Usuwa pojedynczy załącznik — weryfikuje przynależność do transakcji,
+    // kasuje plik z dysku i rekord z bazy
     @Transactional
     public void deleteAttachment(String email, UUID tradeId, UUID attachmentId) throws IOException {
         ensureOwned(email, tradeId);
@@ -112,17 +124,20 @@ public class TradeService {
         attachmentRepository.delete(att);
     }
 
+    // Pomocnicza — pobiera użytkownika po emailu, rzuca wyjątek jeśli nie znaleziono
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", email));
     }
 
+    // Pomocnicza — pobiera transakcję należącą do danego użytkownika, rzuca wyjątek jeśli nie istnieje
     private Trade getUserTrade(String email, UUID tradeId) {
         User user = getUser(email);
         return tradeRepository.findByIdAndUserId(tradeId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Trade", tradeId));
     }
 
+    // Pomocnicza — sprawdza czy transakcja należy do użytkownika, rzuca wyjątek jeśli nie
     private void ensureOwned(String email, UUID tradeId) {
         User user = getUser(email);
         if (!tradeRepository.existsByIdAndUserId(tradeId, user.getId())) {
@@ -130,12 +145,14 @@ public class TradeService {
         }
     }
 
+    // Pomocnicza — pobiera playbook po ID (jeśli podano), rzuca wyjątek jeśli nie istnieje
     private Playbook resolvePlaybook(UUID playbookId) {
         if (playbookId == null) return null;
         return playbookRepository.findById(playbookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Playbook", playbookId));
     }
 
+    // Pomocnicza — konwertuje encję załącznika na obiekt DTO do zwrócenia w odpowiedzi API
     private AttachmentDto toAttachmentDto(TradeAttachment a) {
         return new AttachmentDto(a.getId(), a.getUrl(), a.getFilename(), a.getContentType(), a.getSize());
     }

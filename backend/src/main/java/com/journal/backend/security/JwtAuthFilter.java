@@ -20,10 +20,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
+    // Konstruktor — przyjmuje narzędzie JwtUtil do weryfikacji tokenów
     public JwtAuthFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
 
+    // Filtr wykonywany przy każdym żądaniu HTTP. Wyciąga token JWT z nagłówka "Authorization",
+    // weryfikuje go, odczytuje email i rolę użytkownika, a następnie ustawia kontekst
+    // bezpieczeństwa Spring Security, aby dalsze przetwarzanie żądania znało tożsamość użytkownika
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,

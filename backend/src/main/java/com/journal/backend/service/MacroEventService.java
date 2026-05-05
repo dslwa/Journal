@@ -30,6 +30,8 @@ public class MacroEventService {
 
     private volatile LocalDateTime lastFetchTime = null;
 
+    // Pobiera wydarzenia makroekonomiczne z podanego zakresu dat.
+    // Automatycznie odświeża cache z ForexFactory co 6 godzin
     @Transactional
     public List<MacroEventDto> getEventsForRange(LocalDate from, LocalDate to) {
         if (lastFetchTime == null || lastFetchTime.isBefore(LocalDateTime.now().minusHours(CACHE_TTL_HOURS))) {
@@ -39,6 +41,9 @@ public class MacroEventService {
                 .stream().map(this::toDto).toList();
     }
 
+    // Pobiera kalendarz ekonomiczny z ForexFactory, czyści stare dane z bazy
+    // i zapisuje nowe wydarzenia. Filtruje dni wolne i wpisy niegospodarcze.
+    // Przy błędzie ustawia cooldown 15 min przed ponowną próbą
     @SuppressWarnings("unchecked")
     private void fetchAndCacheEvents() {
         try {
@@ -96,11 +101,13 @@ public class MacroEventService {
         }
     }
 
+    // Pomocnicza — bezpiecznie wyciąga wartość String z mapy (null-safe)
     private String getString(Map<String, Object> map, String key) {
         Object val = map.get(key);
         return val != null ? val.toString() : null;
     }
 
+    // Pomocnicza — parsuje datę z formatu ISO offset (ForexFactory) na LocalDate
     private LocalDate parseFfDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) return null;
         try {
@@ -111,6 +118,7 @@ public class MacroEventService {
         }
     }
 
+    // Pomocnicza — parsuje czas z formatu ISO offset (ForexFactory) na LocalTime
     private LocalTime parseFfTime(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) return null;
         try {
@@ -121,6 +129,7 @@ public class MacroEventService {
         }
     }
 
+    // Pomocnicza — konwertuje encję MacroEvent na obiekt DTO do odpowiedzi API
     private MacroEventDto toDto(MacroEvent e) {
         return new MacroEventDto(
                 e.getId(), e.getEventName(), e.getEventDate(), e.getEventTime(),

@@ -8,6 +8,8 @@ interface Props {
   onSave: (newBalance: number) => Promise<void>;
 }
 
+// Modal do edycji salda początkowego konta. Walidacja: musi być liczbą dodatnią.
+// Zamykany klawiszem Escape lub kliknięciem w tło
 export default function BalanceModal({ currentBalance, onClose, onSave }: Props) {
   const [balance, setBalance] = useState(String(currentBalance));
   const [busy, setBusy] = useState(false);
@@ -15,6 +17,7 @@ export default function BalanceModal({ currentBalance, onClose, onSave }: Props)
 
   useEscapeKey(onClose);
 
+  // Waliduje wartość, woła onSave i zamyka modal po sukcesie
   const handleSave = async () => {
     const num = Number(balance);
     if (isNaN(num) || num <= 0) {

@@ -45,6 +45,9 @@ export interface StrategyStats {
   avgPL: number;
 }
 
+// Liczy zestaw kluczowych metryk tradingowych ze zbioru transakcji:
+// Win Rate, średnia wygrana/strata, Profit Factor, Expectancy oraz Sharpe Ratio.
+// Pomija pozycje otwarte (brak exitPrice). Wszystkie wzory zgodne z literaturą tradingową
 export function calculateMetrics(trades: Trade[]): Metrics {
   const closed = trades.filter(
     (t) => t.exitPrice != null && t.entryPrice != null && t.positionSize != null,
@@ -98,6 +101,8 @@ export function calculateMetrics(trades: Trade[]): Metrics {
   };
 }
 
+// Liczy Max Drawdown z krzywej equity — największy spadek od szczytu (peak) do dołka.
+// Zwraca wartość bezwzględną oraz w procentach od szczytu, w którym drawdown się zaczął
 export function calculateMaxDrawdown(
   curve: { balance: number }[],
 ): { maxDD: number; maxDDPct: number } {
@@ -117,6 +122,8 @@ export function calculateMaxDrawdown(
   return { maxDD, maxDDPct };
 }
 
+// Generuje krzywą equity, czyli zmianę salda konta po każdej zamkniętej transakcji.
+// Sortuje po dacie zamknięcia, kumuluje P&L startując od initialBalance
 export function getEquityCurve(
   trades: Trade[],
   initialBalance: number,
@@ -148,6 +155,8 @@ export function getEquityCurve(
   return curve;
 }
 
+// Grupuje transakcje wg dnia tygodnia (Sun..Sat) z podziałem na wins/losses.
+// Używane do wykresu pokazującego, w które dni trader radzi sobie najlepiej
 export function getTradesByDay(trades: Trade[]): DayStats[] {
   const days = [
     'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
@@ -171,6 +180,8 @@ export function getTradesByDay(trades: Trade[]): DayStats[] {
   return stats;
 }
 
+// Grupuje transakcje wg tagów (rozdzielonych przecinkami w polu tags).
+// Zwraca top 10 tagów najczęściej używanych, z win rate dla każdego z nich
 export function getTradesByTag(trades: Trade[]): TagStats[] {
   const tagMap = new Map<
     string,
@@ -210,6 +221,8 @@ export function getTradesByTag(trades: Trade[]): TagStats[] {
     .slice(0, 10);
 }
 
+// Grupuje transakcje wg powiązanej strategii (Playbook). Transakcje bez strategii lądują w "No Strategy".
+// Zwraca pełne statystyki: liczbę, win rate, łączny i średni P&L na strategię
 export function getTradesByStrategy(trades: Trade[]): StrategyStats[] {
   const map = new Map<
     string,

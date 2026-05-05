@@ -17,6 +17,8 @@ public class MacroEventController {
 
     private final MacroEventService macroEventService;
 
+    // GET /api/macro-events — pobiera wydarzenia makroekonomiczne (ForexFactory) z zakresu dat,
+    // używane przez kalendarz tradingowy do prezentacji ważnych odczytów ekonomicznych
     @GetMapping
     public ResponseEntity<List<MacroEventDto>> getEvents(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

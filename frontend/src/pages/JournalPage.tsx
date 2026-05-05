@@ -8,6 +8,9 @@ import { useConfirm } from '@/contexts/ConfirmContext';
 
 const MOODS = ['\u{1F62B}', '\u{1F61F}', '\u{1F610}', '\u{1F642}', '\u{1F604}'];
 
+// Strona dziennika psychologicznego — kalendarz miesięczny z możliwością dodania
+// wpisu na każdy dzień (nastrój 1-5, energia 1-5, notatki, lekcje, błędy).
+// Trader zapisuje stan emocjonalny dnia by łatwiej powiązać go z wynikami z transakcji
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +21,7 @@ export default function JournalPage() {
 
   useEffect(() => { loadEntries(); }, [currentDate]);
 
+  // Ładuje wpisy dla aktualnie wyświetlanego miesiąca (przeładowuje przy zmianie miesiąca)
   const loadEntries = async () => {
     setLoading(true);
     try {
@@ -33,8 +37,10 @@ export default function JournalPage() {
     }
   };
 
+  // Wyszukuje wpis dla podanej daty (porównanie po stringu YYYY-MM-DD)
   const getEntryForDate = (dateStr: string) => entries.find(e => e.entryDate === dateStr);
 
+  // Generuje tablicę dni miesiąca jako stringi YYYY-MM-DD (z paddingiem na początek tygodnia)
   const getDaysInMonth = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -59,6 +65,7 @@ export default function JournalPage() {
 
   const selectedEntry = selectedDate ? getEntryForDate(selectedDate) : null;
 
+  // Zapisuje wpis (UPSERT — backend tworzy nowy lub aktualizuje istniejący po dacie)
   const handleSave = async (dto: Partial<JournalEntry>) => {
     try {
       await apiSaveJournalEntry(dto);
@@ -70,6 +77,7 @@ export default function JournalPage() {
     }
   };
 
+  // Usuwa wpis dziennika po potwierdzeniu w modalu
   const handleDelete = async () => {
     if (!selectedDate) return;
     const confirmed = await confirm({ title: 'Delete Journal Entry?', message: 'This will permanently delete this journal entry.', confirmText: 'Delete', confirmVariant: 'danger' });

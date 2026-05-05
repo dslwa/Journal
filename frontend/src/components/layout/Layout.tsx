@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import Sidebar from './Sidebar';
 
+// Główny układ aplikacji — sidebar po lewej + obszar główny.
+// Na mobile sidebar jest ukryty, otwierany przyciskiem hamburger w lewym górnym rogu
 export default function Layout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

@@ -5,9 +5,13 @@ declare global {
   interface Window { TradingView: any; }
 }
 
+// Strona z wbudowanym widgetem TradingView (skrypt z tv.js) — pełnoekranowy wykres
+// z możliwością zmiany symbolu, interwałów i indykatorów. Domyślnie EURUSD na OANDA
 export default function ChartPage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Inicjalizuje widget TradingView — dodaje skrypt do head i tworzy widget w div-ie.
+  // Funkcja czyszcząca usuwa skrypt i zawartość kontenera przy odmontowaniu komponentu
   useEffect(() => {
     if (!containerRef.current) return;
 

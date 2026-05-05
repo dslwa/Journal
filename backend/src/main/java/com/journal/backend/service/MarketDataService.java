@@ -22,6 +22,9 @@ public class MarketDataService {
     @Value("${exchangerate.api.key:}")
     private String exchangeRateApiKey;
 
+    // Pobiera aktualną cenę instrumentu finansowego. Automatycznie wybiera źródło danych
+    // na podstawie symbolu: pary walutowe → ExchangeRate-API, akcje → Finnhub.
+    // Zwraca null przy błędach API, by frontend mógł działać dalej (graceful degradation)
     public Double getCurrentPrice(String symbol) {
         String normalized = normalizeSymbol(symbol);
         try {
@@ -35,6 +38,9 @@ public class MarketDataService {
         }
     }
 
+    // Pobiera kurs pary walutowej (np. EURUSD) z ExchangeRate-API.
+    // Rozbija symbol 6-znakowy na walutę bazową i kwotowaną, używa płatnego endpointu jeśli
+    // mamy klucz API, w innym wypadku darmowego. Obsługuje obie struktury odpowiedzi (rates / conversion_rates)
     @SuppressWarnings("unchecked")
     private Double getForexQuote(String symbol) {
         try {
@@ -59,6 +65,7 @@ public class MarketDataService {
         }
     }
 
+    // Pobiera aktualną cenę akcji z API Finnhub (pole "c" = current price)
     @SuppressWarnings("unchecked")
     private Double getStockQuote(String symbol) {
         try {
@@ -75,10 +82,13 @@ public class MarketDataService {
         }
     }
 
+    // Pomocnicza — normalizuje symbol: wielkie litery, bez separatorów (EUR/USD → EURUSD)
     private String normalizeSymbol(String symbol) {
         return symbol.toUpperCase().replace("/", "").replace("-", "").trim();
     }
 
+    // Pomocnicza — heurystyka rozpoznająca pary walutowe na podstawie 6 znaków
+    // i prefiksu jednej z głównych walut (EUR, GBP, USD, JPY itd.)
     private boolean isForexPair(String symbol) {
         String normalized = normalizeSymbol(symbol);
         return normalized.matches("^[A-Z]{6}$") && (

@@ -1,0 +1,496 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+
+\graphicspath{{screenshots/}}
+
+\geometry{margin=2.5cm}
+\onehalfspacing
+
+\definecolor{codebg}{HTML}{ffffff}
+\definecolor{codetext}{HTML}{1f2328}
+\definecolor{keyword}{HTML}{6f42c1}
+\definecolor{string}{HTML}{0a7d20}
+\definecolor{comment}{HTML}{6a737d}
+\definecolor{annotation}{HTML}{b08000}
+\definecolor{framecolor}{HTML}{d0d7de}
+
+\lstdefinestyle{java}{
+  language=Java,
+  basicstyle=\ttfamily\footnotesize\color{codetext},
+  backgroundcolor=\color{codebg},
+  commentstyle=\color{comment}\itshape,
+  keywordstyle=\color{keyword}\bfseries,
+  stringstyle=\color{string},
+  numberstyle=\tiny\color{comment},
+  numbers=left,
+  numbersep=8pt,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{framecolor},
+  tabsize=4,
+  showstringspaces=false,
+  morekeywords={var, record, yield},
+  literate={ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1 {ó}{{\'o}}1 {ś}{{\'s}}1 {ź}{{\'z}}1 {ż}{{\.z}}1
+            {Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1 {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ź}{{\'Z}}1 {Ż}{{\.Z}}1,
+}
+
+\lstdefinestyle{typescript}{
+  language=Java,
+  basicstyle=\ttfamily\footnotesize\color{codetext},
+  backgroundcolor=\color{codebg},
+  commentstyle=\color{comment}\itshape,
+  keywordstyle=\color{keyword}\bfseries,
+  stringstyle=\color{string},
+  numberstyle=\tiny\color{comment},
+  numbers=left,
+  numbersep=8pt,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{framecolor},
+  tabsize=2,
+  showstringspaces=false,
+  morekeywords={const, let, async, await, import, from, export, default, type, interface, function, return, useState, useEffect, useMemo, Promise},
+  morecomment=[l]{//},
+  morestring=[b]',
+  morestring=[b]`,
+}
+
+\lstdefinestyle{yaml}{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{codebg},
+  commentstyle=\color{comment}\itshape,
+  keywordstyle=\color{keyword}\bfseries,
+  numberstyle=\tiny\color{comment},
+  numbers=left,
+  numbersep=8pt,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{codebg},
+  tabsize=2,
+  showstringspaces=false,
+  morecomment=[l]{\#},
+}
+
+\title{\textbf{Sprawozdanie z~Projektu:\\ Trading Journal}}
+\author{
+  Daniel Salawa, Igor Świerczek \\
+  ITE, 1 rok, 2 stopień
+}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\section{Cel projektu}
+% ============================================================
+
+Celem projektu było zaprojektowanie i~zaimplementowanie zaawansowanej platformy webowej \textbf{Trading Journal}, wspomagającej proces decyzyjny i~analityczny inwestorów giełdowych. Aplikacja miała zapewnić pełną kontrolę nad historią transakcji, umożliwić analizę psychologiczną tradera, dokumentowanie strategii inwestycyjnych oraz wizualizację wyników handlowych. Całość miała zostać zrealizowana w~architekturze klient-serwer z~wykorzystaniem nowoczesnych technologii webowych oraz zewnętrznych integracji finansowych.
+
+\subsection*{Podział obowiązków}
+\begin{itemize}
+  \item \textbf{Daniel Salawa}, backend i~infrastruktura: logika biznesowa (Spring Boot), baza danych (PostgreSQL + Flyway), integracje z~API zewnętrznymi, konteneryzacja (Docker), wdrożenie (Railway).
+  \item \textbf{Igor Świerczek}, frontend i~bezpieczeństwo: interfejs użytkownika (React + TypeScript), system autentyfikacji JWT, zabezpieczenia (CORS, BCrypt, walidacja dostępu), wizualizacje danych (Recharts).
+\end{itemize}
+
+% ============================================================
+\section{Użyte technologie}
+% ============================================================
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Warstwa / Obszar} & \textbf{Technologia} \\ \hline
+Backend & Java 17, Spring Boot 3, Spring Security, Lombok \\ \hline
+Baza danych & PostgreSQL 16, Flyway (13 migracji) \\ \hline
+Frontend & React 18, TypeScript, Vite, Tailwind CSS \\ \hline
+Wykresy & Recharts, TradingView Widget \\ \hline
+Autentyfikacja & JWT (HMAC), BCrypt \\ \hline
+API zewnętrzne & Finnhub (akcje), ExchangeRate-API (forex), ForexFactory (makro) \\ \hline
+Konteneryzacja & Docker Compose (PostgreSQL, backend, frontend + Nginx) \\ \hline
+Wdrożenie & Railway (backend), Vercel (frontend) \\ \hline
+Kontrola wersji & Git, GitHub \\ \hline
+\end{tabular}
+\caption{Zestawienie użytych technologii}
+\end{table}
+
+% ============================================================
+\section{Zakładane funkcjonalności}
+% ============================================================
+
+\begin{enumerate}
+  \item \textbf{Rejestracja i~logowanie}, bezpieczna autentyfikacja oparta na tokenach JWT z~hashowaniem haseł BCrypt oraz resetem hasła.
+  \item \textbf{Dashboard}, przegląd konta: saldo, łączny P\&L, win rate, tabela transakcji z~sortowaniem i~filtrami.
+  \item \textbf{Zarządzanie transakcjami (Trade)}, tworzenie, edycja i~usuwanie transakcji z~parametrami: cena wejścia/wyjścia, kierunek (LONG/SHORT), stop loss, rozmiar pozycji, emocje, ocena, notatki, tagi, załączniki graficzne.
+  \item \textbf{Playbook (Strategie)}, dokumentowanie strategii handlowych w~formacie Markdown z~dynamicznymi checklistami (JSON), automatycznie pojawiającymi się w~formularzu transakcji.
+  \item \textbf{Dziennik psychologiczny}, codzienne wpisy z~oceną nastroju (1--5), poziomu energii, notatek i~wniosków.
+  \item \textbf{Analytics}, zaawansowane metryki (Win Rate, Profit Factor, Expectancy, Sharpe Ratio, Max Drawdown) i~wizualizacje (krzywa equity, rozkład wg dnia tygodnia, proporcja win/loss, wydajność wg strategii).
+  \item \textbf{Kalendarz tradingowy}, widok kalendarza łączący transakcje z~wydarzeniami makroekonomicznymi (ForexFactory).
+  \item \textbf{Long Term (Planowanie strategiczne)}, moduł organizujący myślenie w~kategoriach: THEME, WATCHLIST, GOAL, REVIEW.
+  \item \textbf{Chart}, integracja z~widgetem TradingView do analizy technicznej.
+  \item \textbf{Panel administracyjny}, zarządzanie użytkownikami, statystyki systemowe, konfiguracja klucz-wartość.
+  \item \textbf{Konteneryzacja i~wdrożenie}, Docker Compose dla środowiska lokalnego, deployment na Railway/Vercel.
+\end{enumerate}
+
+% ============================================================
+\section{Fragmenty kodu z~omówieniem}
+% ============================================================
+
+% ---- Rysunek 1 ----
+\begin{figure}[H]
+\begin{lstlisting}[style=java, caption={}, label={}]
+public Trade toEntity(User user, TradeRequest request,
+                      Playbook playbook) {
+    return Trade.builder()
+            .user(user)
+            .ticker(request.getTicker().toUpperCase())
+            .direction(request.getDirection())
+            .entryPrice(request.getEntryPrice())
+            .exitPrice(request.getExitPrice())
+            .positionSize(request.getPositionSize())
+            .stopLoss(request.getStopLoss())
+            .playbook(playbook)
+            .notes(request.getNotes())
+            .tags(request.getTags())
+            .emotionBefore(request.getEmotionBefore())
+            .emotionAfter(request.getEmotionAfter())
+            .preTradeChecklist(request.getPreTradeChecklist())
+            .postTradeReview(request.getPostTradeReview())
+            .build();
+}
+
+private Double calculatePnl(Trade trade) {
+    if (trade.getExitPrice() == null) return null;
+    double multiplier =
+        trade.getDirection() == TradeDirection.LONG ? 1 : -1;
+    return (trade.getExitPrice() - trade.getEntryPrice())
+           * trade.getPositionSize() * multiplier;
+}
+\end{lstlisting}
+\caption{TradeMapper, mapowanie DTO na encję oraz obliczanie P\&L. Metoda \texttt{calculatePnl} uwzględnia kierunek transakcji: dla pozycji SHORT stosuje odwrócony mnożnik, dzięki czemu zysk jest poprawnie obliczany niezależnie od kierunku.}
+\label{fig:trade-mapper}
+\end{figure}
+
+% ---- Rysunek 2 ----
+\begin{figure}[H]
+\begin{lstlisting}[style=java, caption={}, label={}]
+@Override
+protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain) throws ServletException,
+                                       IOException {
+    String header = request.getHeader("Authorization");
+    if (StringUtils.hasText(header)
+            && header.startsWith("Bearer ")) {
+        String token = header.substring(7);
+
+        if (jwtUtil.isTokenValid(token)
+                && SecurityContextHolder.getContext()
+                   .getAuthentication() == null) {
+            Claims claims = jwtUtil.parseClaims(token);
+            String email = claims.getSubject();
+            String roleStr = claims.get("role", String.class);
+            Role role = roleStr != null
+                ? Role.valueOf(roleStr) : Role.USER;
+
+            UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                    email, null,
+                    List.of(new SimpleGrantedAuthority(
+                        role.authority())));
+            auth.setDetails(
+                new WebAuthenticationDetailsSource()
+                    .buildDetails(request));
+            SecurityContextHolder.getContext()
+                .setAuthentication(auth);
+        }
+    }
+    filterChain.doFilter(request, response);
+}
+\end{lstlisting}
+\caption{JwtAuthFilter, filtr bezpieczeństwa Spring Security. Przy każdym żądaniu HTTP wyciąga token JWT z~nagłówka \texttt{Authorization}, weryfikuje podpis HMAC, odczytuje email i~rolę użytkownika, a~następnie ustawia kontekst bezpieczeństwa, aby dalsze warstwy aplikacji znały tożsamość użytkownika.}
+\label{fig:jwt-filter}
+\end{figure}
+
+% ---- Rysunek 3 ----
+\begin{figure}[H]
+\begin{lstlisting}[style=java, caption={}, label={}]
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http,
+        JwtUtil jwtUtil) throws Exception {
+    http
+        .csrf(AbstractHttpConfigurer::disable)
+        .cors(Customizer.withDefaults())
+        .sessionManagement(s -> s.sessionCreationPolicy(
+            SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/actuator/health").permitAll()
+            .requestMatchers(HttpMethod.OPTIONS, "/**")
+                .permitAll()
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .anyRequest().authenticated()
+        )
+        .addFilterBefore(new JwtAuthFilter(jwtUtil),
+            UsernamePasswordAuthenticationFilter.class);
+    return http.build();
+}
+\end{lstlisting}
+\caption{SecurityConfig, konfiguracja łańcucha filtrów Spring Security. API jest bezstanowe (STATELESS, brak sesji). Endpointy autentyfikacji są publiczne, panel admina wymaga roli ADMIN, a~pozostałe zasoby wymagają uwierzytelnienia tokenem JWT.}
+\label{fig:security-config}
+\end{figure}
+
+% ---- Rysunek 4 ----
+\begin{figure}[H]
+\begin{lstlisting}[style=java, caption={}, label={}]
+@Transactional
+public List<AttachmentDto> uploadAttachments(
+        String email, UUID tradeId,
+        List<MultipartFile> files) throws IOException {
+    ensureOwned(email, tradeId);
+    var allowed = Set.of("image/jpeg", "image/png",
+                         "image/webp", "image/gif");
+    List<TradeAttachment> saved = new ArrayList<>();
+
+    for (MultipartFile f : files) {
+        if (f.isEmpty()) continue;
+        String url = fileUploadService
+            .saveFile(f, allowed);
+        var att = TradeAttachment.builder()
+                .tradeId(tradeId)
+                .filename(f.getOriginalFilename())
+                .contentType(f.getContentType())
+                .size(f.getSize())
+                .url(url)
+                .build();
+        saved.add(attachmentRepository.save(att));
+    }
+    return saved.stream()
+        .map(this::toAttachmentDto).toList();
+}
+\end{lstlisting}
+\caption{TradeService, przesyłanie załączników graficznych. Metoda weryfikuje przynależność transakcji do użytkownika (\texttt{ensureOwned}), waliduje typ MIME pliku (tylko obrazy), zapisuje plik na dysku z~unikalną nazwą UUID i~tworzy rekord w~bazie danych.}
+\label{fig:upload-attachments}
+\end{figure}
+
+% ---- Rysunek 5 ----
+\begin{figure}[H]
+\begin{lstlisting}[style=typescript, caption={}, label={}]
+// Interceptor Axios, automatyczne dolaczanie tokenu JWT
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('jwt');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Auto-logout przy 401, retry przy 502/503/504
+api.interceptors.response.use(
+  (res) => res,
+  async (err: AxiosError) => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem('jwt');
+      location.href = '/';
+    }
+    if (isRetryableStartupError(err)) {
+      const config = err.config as RetryableRequestConfig;
+      config._retryCount = (config._retryCount ?? 0) + 1;
+      if (config._retryCount <= MAX_STARTUP_RETRIES) {
+        await wait(config._retryCount * 700);
+        return api.request(config);
+      }
+    }
+    return Promise.reject(err);
+  },
+);
+\end{lstlisting}
+\caption{Klient API (frontend), interceptory Axios. Pierwszy interceptor automatycznie dołącza token JWT do każdego żądania. Drugi obsługuje błędy: przy statusie 401 wylogowuje użytkownika, a~przy błędach 502/503/504 automatycznie ponawia żądanie (do 3 prób z~rosnącym opóźnieniem).}
+\label{fig:axios-interceptors}
+\end{figure}
+
+% ---- Rysunek 6 ----
+\begin{figure}[H]
+\begin{lstlisting}[style=typescript, caption={}, label={}]
+const stats = useMemo(() => {
+  const initialBalance = me?.initialBalance ?? 10000;
+  if (!trades.length)
+    return { totalPL: 0, winRate: 0, totalTrades: 0,
+             wins: 0, losses: 0,
+             currentBalance: initialBalance };
+
+  let totalPL = 0, wins = 0, losses = 0;
+  for (const tr of trades) {
+    const pl = calculatePL(tr);
+    totalPL += pl;
+    if (pl > 0) wins++;
+    else if (pl < 0) losses++;
+  }
+
+  return {
+    totalPL,
+    winRate: Math.round((wins / trades.length) * 100),
+    totalTrades: trades.length, wins, losses,
+    currentBalance: initialBalance + totalPL,
+  };
+}, [trades, me]);
+\end{lstlisting}
+\caption{Dashboard, obliczanie statystyk w~czasie rzeczywistym przy użyciu hooka \texttt{useMemo}. Statystyki (saldo, P\&L, win rate) są przeliczane tylko wtedy, gdy zmieni się lista transakcji, co minimalizuje zbędne renderowanie komponentów React.}
+\label{fig:dashboard-stats}
+\end{figure}
+
+% ---- Rysunek 7 ----
+\begin{figure}[H]
+\begin{lstlisting}[style=yaml, caption={}, label={}]
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: journal_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5443:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL:
+        jdbc:postgresql://db:5432/journal_db
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:8080"
+    environment:
+      BACKEND_URL: http://backend:8080
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:
+\end{lstlisting}
+\caption{Docker Compose, definicja trzech kontenerów: baza PostgreSQL 16 z~wolumenem persystentnym, backend Spring Boot z~profilem deweloperskim oraz frontend (Nginx) z~reverse proxy do backendu. Zależności (\texttt{depends\_on}) zapewniają poprawną kolejność uruchamiania.}
+\label{fig:docker-compose}
+\end{figure}
+
+% ============================================================
+\section{Zrzuty ekranowe z~działającej aplikacji}
+% ============================================================
+
+W~tej sekcji prezentujemy widoki z~działającej aplikacji. Pod każdym zrzutem znajduje się opis tego, co prezentuje dany widok i~jakie elementy interfejsu są na nim widoczne.
+
+% Wstawia zrzut ekranu z~katalogu screenshots/ (format poziomy)
+\newcommand{\screenshotPlaceholder}[2]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{#1.png}
+    \caption{#2}
+    \label{fig:#1}
+  \end{figure}%
+}
+
+% Wstawia zrzut ekranu w~formacie pionowym (modale, waskie widoki)
+\newcommand{\screenshotPlaceholderTall}[2]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.70\textwidth]{#1.png}
+    \caption{#2}
+    \label{fig:#1}
+  \end{figure}%
+}
+
+% --- 1. Logowanie / rejestracja ---
+\subsection*{Logowanie i~rejestracja}
+Strona startowa aplikacji prezentuje wycentrowany formularz autentyfikacji z~przełącznikiem między trybem logowania (Sign~In) a~rejestracji (Sign~Up). W~trybie logowania pole hasła wyposażone jest w~przycisk \texttt{Show/Hide} ujawniający wpisany ciąg, a~pod polem hasła znajduje się link \emph{Forgot~password?} prowadzący do~procedury resetu. W~trybie rejestracji formularz rozszerzany jest o~pole \texttt{Username} (autouzupełnianie HTML5: \texttt{username}) i~automatycznie zmienia atrybut \texttt{autocomplete} dla hasła na \texttt{new-password}. Po~poprawnym uwierzytelnieniu backend zwraca token JWT, który zapisywany jest w~\texttt{localStorage} i~następnie automatycznie dołączany przez interceptor Axios do~każdego kolejnego żądania (Rys.~\ref{fig:axios-interceptors}). Komunikaty błędów (nieprawidłowe dane, zablokowane konto) są pokazywane w~osobnym banerze z~animacją wjazdu.
+\screenshotPlaceholder{login}{Ekran logowania, formularz uwierzytelnienia opartego na~tokenie JWT}
+
+% --- 2. Dashboard ---
+\subsection*{Dashboard, widok główny}
+Dashboard jest ekranem startowym po~zalogowaniu. U~góry strony znajduje się powitanie z~nazwą użytkownika oraz siatka kart statystycznych: \textbf{Account~Balance} (saldo początkowe + skumulowany P\&L, z~przyciskiem \emph{Edit} otwierającym modal edycji salda), \textbf{Total~P\&L} (z~ikoną kierunku trendu), \textbf{Win~Rate} (procentowo, kolorowane zielono/czerwono w~zależności od~poziomu) oraz karta-CTA \textbf{Add~New~Trade} otwierająca modal dodawania transakcji. Pod~kartami znajduje się pasek filtrów (wyszukiwanie ticker/notatki, kierunek LONG/SHORT, wynik win/loss/break-even) oraz tabela ostatnich transakcji z~klikalnymi nagłówkami kolumn (sortowanie wzn./mal. po~dacie, tickerze, wielkości pozycji i~P\&L). Każdy wiersz tabeli pokazuje datę, ticker, kolorowany badge LONG/SHORT, ceny wejścia i~wyjścia, P\&L (kolorowane), badge wyniku oraz licznik załączników. Wszystkie statystyki są przeliczane po~stronie klienta przy użyciu hooka \texttt{useMemo} (Rys.~\ref{fig:dashboard-stats}), co~zapewnia natychmiastową reakcję interfejsu na~każdą zmianę listy transakcji.
+\screenshotPlaceholder{dashboard}{Dashboard, karty statystyczne i~tabela transakcji z~filtrami}
+
+% --- 3. Trade Modal ---
+\subsection*{Modal dodawania i~edycji transakcji}
+Modal transakcji jest najbogatszym formularzem w~aplikacji, dostępnym z~przycisku \emph{Add~New~Trade} oraz z~każdego wiersza tabeli (otwiera się w~trybie edycji). Formularz dzieli się na~kilka logicznych sekcji: \textbf{Identyfikacja} (ticker, data otwarcia/zamknięcia), \textbf{Pozycja} (kierunek LONG/SHORT, cena wejścia/wyjścia, stop loss, wielkość pozycji), \textbf{Strategia} (lista rozwijana z~playbookami użytkownika, dynamicznie wstrzykująca checklistę pre-trade), \textbf{Psychologia} (ocena emocji przed i~po~transakcji, ocena 1--10, tagi setupu) oraz \textbf{Załączniki} (drag~\&~drop dla zrzutów wykresów, przechowywanych w~katalogu uploads na~backendzie z~zabezpieczeniem przed path traversal). Modal posiada również automatyczny \emph{position~sizing} obliczający rekomendowaną wielkość pozycji na~podstawie ryzyka procentowego do~saldo konta i~odległości stop lossa, oraz przycisk \emph{Fetch~current~price} pobierający aktualny kurs z~Finnhub/ExchangeRate-API.
+\screenshotPlaceholderTall{trade-modal}{Modal dodawania transakcji, pełny formularz z~sekcjami identyfikacji, pozycji i~psychologii}
+
+% --- 4. Analytics ---
+\subsection*{Moduł Analytics, zaawansowane metryki tradingowe}
+Strona Analytics jest centralnym punktem oceny skuteczności tradera. Na~górze wyświetlana jest siatka dziewięciu kart z~kluczowymi metrykami obliczanymi w~module \texttt{analyticsCalculations.ts}: \textbf{Total~Trades}, \textbf{Win~Rate}, \textbf{Total~P/L}, \textbf{Profit~Factor} (suma wygranych podzielona przez sumę przegranych), \textbf{Avg~Win}, \textbf{Avg~Loss}, \textbf{Expectancy} (oczekiwana wartość pojedynczej transakcji), \textbf{Max~Drawdown} (maksymalny spadek od~szczytu krzywej kapitału, w~jednostkach i~procentowo) oraz \textbf{Sharpe~Ratio} (stosunek średniego zwrotu do~odchylenia standardowego). Pod~metrykami znajduje się szeroki wykres \textbf{Equity~Curve} (Recharts \texttt{LineChart}) pokazujący ewolucję salda po~każdej transakcji. Niżej dwa wykresy kolumnowe/kołowe: \textbf{Trades~by~Day~of~Week} z~rozbiciem na~wygrane i~przegrane oraz \textbf{Win/Loss~Distribution} jako wykres kołowy. Sekcja \textbf{Performance~by~Strategy} prezentuje karty per playbook z~win rate, ilością transakcji i~paskiem postępu. Na~końcu tabela \textbf{Performance~by~Tag/Setup} agreguje wyniki według tagów setupu.
+\screenshotPlaceholder{analytics-metrics}{Analytics, siatka kart z~metrykami (Win Rate, Profit Factor, Sharpe, Max DD)}
+\screenshotPlaceholder{analytics-equity}{Analytics, krzywa kapitału (Equity Curve) i~wykresy rozkładu}
+\screenshotPlaceholder{analytics-strategy}{Analytics, sekcja \emph{Performance by Strategy} oraz tabela tagów}
+
+% --- 5. Kalendarz ---
+\subsection*{Kalendarz tradingowy}
+Widok kalendarza łączy w~jednej siatce miesięcznej dwa źródła danych: własne transakcje użytkownika oraz wydarzenia makroekonomiczne pobierane co~6~godzin z~ForexFactory (klasa \texttt{MacroEventService} z~mechanizmem cache i~fallbackiem). Każda komórka dnia może wyświetlać: numer dnia, kropki impactu (czerwone, pomarańczowe, żółte, odpowiadające High/Medium/Low), miniaturową informację o~liczbie transakcji w~danym dniu wraz z~sumą P\&L (kolorowane) oraz cienki kolorowy pasek w~stopce komórki sygnalizujący wynik dnia (zielony~=~zysk, czerwony~=~strata, szary~=~break-even). Nad~kalendarzem znajduje się pasek filtrów krajów (USD, EUR, GBP, ...) pozwalający ograniczyć wyświetlane eventy do~rynków interesujących tradera. Klik w~komórkę dnia otwiera modal z~pełną listą transakcji i~eventów makro, z~dodatkowymi metrykami dnia (W/L, P\&L, ilość zamkniętych pozycji).
+\screenshotPlaceholder{calendar-month}{Kalendarz tradingowy, widok miesięczny z~transakcjami i~eventami makro}
+\screenshotPlaceholderTall{calendar-day}{Kalendarz, modal detali dnia z~listą transakcji i~wydarzeń makroekonomicznych}
+
+% --- 6. Playbook ---
+\subsection*{Moduł Playbook, biblioteka strategii}
+Playbook jest osobistym katalogiem strategii tradingowych użytkownika. Lista strategii prezentowana jest jako siatka kart z~obrazkiem podglądu, tytułem, krótkim opisem, tagami (kolorowane chipy) i~wycinkiem treści. Klik w~kartę otwiera widok \emph{read-only} z~wyrenderowanym Markdownem i~zaznaczoną checklistą; klik w~przycisk \emph{Edit} przełącza do~edytora dwupanelowego: po~lewej pole tekstowe Markdown (czcionka monospace), po~prawej tab \emph{Preview} z~live-podglądem wyrenderowanym przez \texttt{react-markdown} i~\texttt{remark-gfm}. Edytor pozwala na~upload obrazka ilustrującego setup (drag~\&~drop), zarządzanie checklistą pre-trade (lista pozycji, dodawanie po~Enter, usuwanie krzyżykiem) oraz tagi rozdzielone przecinkami. Każda strategia może być wybrana w~modalu transakcji, co~powoduje automatyczne wczytanie jej checklisty do~formularza tradingowego.
+\screenshotPlaceholder{playbook-list}{Playbook, lista strategii w~układzie kart z~tagami i~obrazkami podglądu}
+\screenshotPlaceholderTall{playbook-view}{Playbook, widok read-only strategii z~wyrenderowanym Markdownem}
+
+% --- 7. Long Term ---
+\subsection*{Moduł Long~Term, planowanie strategiczne}
+Long~Term to~moduł wykraczający poza horyzont dnia, który organizuje myślenie inwestora w~cztery kategorie: \textbf{THEME} (motywy rynkowe wymagające obserwacji przez tygodnie/miesiące), \textbf{WATCHLIST} (instrumenty oczekujące na~trigger lub potwierdzenie), \textbf{GOAL} (cele kwartalne procesowe i~portfelowe) oraz \textbf{REVIEW} (okresowe przeglądy weryfikujące, co~jest jeszcze aktualne). Każdy wpis ma~swój status (\texttt{ACTIVE}, \texttt{ON\_WATCH}, \texttt{BUILDING}, \texttt{COMPLETED}, \texttt{INVALIDATED}) prezentowany jako kolorowy chip oraz osobne sekcje formularza: \emph{Title}, \emph{Asset}, \emph{Horizon} (1-3M, 3-6M, ...), \emph{Thesis} (teza), \emph{Trigger~Plan} (warunek wejścia), \emph{Invalidation} (warunek unieważnienia tezy) i~\emph{Notes}. U~góry strony cztery karty statystyczne agregują liczbę aktywnych wpisów per kategoria, a~pasek filtrów pozwala ograniczyć widok do~jednej kategorii lub do~wyników wyszukiwania pełnotekstowego we~wszystkich polach.
+\screenshotPlaceholder{long-term-list}{Long Term, lista wpisów pogrupowanych w~kategoriach THEME, WATCHLIST, GOAL, REVIEW}
+
+% --- 8. Chart ---
+\subsection*{Moduł Chart, integracja z~TradingView}
+Strona Chart jest pełnoekranowym widokiem zawierającym osadzony widget TradingView (skrypt \texttt{tv.js}). Daje on~tradera dostęp do~pełnej analizy technicznej bezpośrednio w~aplikacji: świece, wskaźniki techniczne (RSI, MACD, średnie kroczące, Bollinger Bands), narzędzia rysowania (linie trendu, Fibonacci, fale Elliotta), wybór timeframe'u (1m -- 1M), zmianę symbolu (akcje, forex, crypto, indeksy) oraz wbudowany kalendarz wydarzeń. Widget jest skonfigurowany w~motywie ciemnym pasującym do~reszty aplikacji, z~domyślną parą EUR/USD na~OANDA. Inicjalizacja oraz cleanup widgetu odbywa się w~hooku \texttt{useEffect} (zapobiega wyciekom DOM przy odmontowaniu komponentu).
+\screenshotPlaceholder{chart}{Moduł Chart, widget TradingView z~analizą techniczną pary EUR/USD}
+
+% --- 9. Admin ---
+\subsection*{Panel administracyjny}
+Panel administracyjny dostępny jest wyłącznie dla~użytkowników z~rolą \texttt{ADMIN} (warunek wyświetlenia linku w~sidebarze --- na~podstawie pola \texttt{role} z~payloadu JWT --- oraz warunek autoryzacyjny po~stronie backendu w~\texttt{SecurityConfig}). Panel składa się z~trzech zakładek: \textbf{Users} (tabela wszystkich kont z~kolumnami: username, email, role, liczba transakcji, liczba wpisów dziennika, data ostatniej transakcji, status active/disabled oraz akcje: \emph{Disable/Enable}, \emph{Reset~PW} i~\emph{Delete}), \textbf{Statistics} (siatka kart z~metrykami systemowymi: \emph{Total~Users}, \emph{Active~Users~30d}, \emph{Total~Trades}, \emph{Journal~Entries}, \emph{Avg~Trades/User}) oraz \textbf{Config} (edytor par klucz-wartość konfiguracji systemowej, np. limity wielkości pliku, flagi feature toggle). Reset hasła otwiera osobny modal z~polem nowego hasła (wymagane min. 8~znaków) i~przyciskiem \emph{Show/Hide}. Każda destrukcyjna akcja (Delete, Reset~PW) wymaga potwierdzenia w~globalnym \texttt{ConfirmDialog}.
+\screenshotPlaceholder{admin-users}{Panel administracyjny, zakładka Users z~listą kont i~akcjami}
+
+% ============================================================
+\section{Wnioski z~ćwiczenia}
+% ============================================================
+
+Wszystkie zakładane funkcjonalności zostały zrealizowane w~stopniu zadowalającym. Aplikacja umożliwia pełne zarządzanie transakcjami z~uwzględnieniem parametrów psychologicznych, dokumentowanie strategii w~module Playbook, prowadzenie dziennika psychologicznego, analizę wyników za pomocą zaawansowanych metryk i~wizualizacji oraz planowanie długoterminowe.
+
+Szczególnie dobrze udało się zrealizować:
+\begin{itemize}
+  \item \textbf{Architekturę warstwową backendu}, podział na kontrolery, serwisy, repozytoria i~mappery zapewnił czytelność kodu i~łatwość rozbudowy. System 13 migracji Flyway zagwarantował powtarzalność schematów bazy danych.
+  \item \textbf{System bezpieczeństwa}, autentyfikacja JWT, hashowanie BCrypt, ochrona przed enumeracją emaili, weryfikacja przynależności zasobów i~konfiguracja CORS tworzą spójną warstwę ochronną.
+  \item \textbf{Optymalizację frontendu}, lazy loading stron, memoizacja obliczeń (\texttt{useMemo}), mechanizm auto-retry i~globalne konteksty (Toast, Confirm) zapewniają płynne działanie interfejsu.
+  \item \textbf{Konteneryzację}, Docker Compose umożliwia uruchomienie całego systemu jednym poleceniem, co znacznie upraszcza zarówno lokalne testowanie, jak i~wdrożenie produkcyjne.
+\end{itemize}
+
+Elementy, które można by usprawnić w~przyszłości:
+\begin{itemize}
+  \item Dodanie testów jednostkowych i~integracyjnych (JUnit, React Testing Library) w~celu zwiększenia niezawodności.
+  \item Wdrożenie WebSocket do aktualizacji cen rynkowych w~czasie rzeczywistym zamiast odpytywania REST.
+  \item Rozbudowa modułu Analytics o~analizę korelacji między nastrojem z~dziennika a~wynikami transakcji.
+  \item Dodanie eksportu danych do CSV/PDF na potrzeby raportowania.
+\end{itemize}
+
+Projekt pozwolił na praktyczne zastosowanie wzorców architektonicznych (MVC, Builder, DTO, Repository), poznanie mechanizmów bezpieczeństwa webowego oraz doświadczenie pełnego cyklu tworzenia aplikacji, od projektowania bazy danych, przez implementację logiki biznesowej i~interfejsu, po konteneryzację i~wdrożenie na platformę chmurową.
+
+\end{document}

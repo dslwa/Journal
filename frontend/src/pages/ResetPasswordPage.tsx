@@ -3,6 +3,8 @@ import { apiResetPassword } from '@/api/client';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 
+// Strona drugiego kroku resetu hasła — przyjmuje token z URL (?token=...)
+// i pozwala ustawić nowe hasło. Po sukcesie automatycznie przekierowuje na login po 3s
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -15,10 +17,12 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  // Walidacja na starcie — brak tokenu = błąd (np. ktoś otworzył stronę bezpośrednio)
   useEffect(() => {
     if (!token) setError('Invalid reset link. Please request a new password reset.');
   }, [token]);
 
+  // Walidacja po stronie klienta (dł. hasła, zgodność potwierdzenia) i wywołanie API resetu
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');

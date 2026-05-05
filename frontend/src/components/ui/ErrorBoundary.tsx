@@ -5,16 +5,20 @@ interface State {
   error?: Error;
 }
 
+// Globalny error boundary React — przechwytuje błędy w drzewie komponentów
+// i wyświetla ekran awaryjny zamiast białej strony. Owijamy nim całą aplikację
 export default class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   State
 > {
   state: State = { hasError: false };
 
+  // Standardowy lifecycle React — wywoływany gdy komponent potomny rzuci błąd
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
+  // Renderuje fallback z przyciskiem reload, lub oryginalne dzieci jeśli nie było błędu
   render() {
     if (this.state.hasError) {
       return (

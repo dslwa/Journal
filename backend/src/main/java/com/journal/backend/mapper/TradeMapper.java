@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class TradeMapper {
 
+    // Tworzy nową encję Trade na podstawie żądania DTO i powiązań (użytkownik, playbook).
+    // Ticker jest normalizowany do wielkich liter, by uniknąć duplikatów typu "aapl"/"AAPL"
     public Trade toEntity(User user, TradeRequest request, Playbook playbook) {
         return Trade.builder()
                 .user(user)
@@ -34,6 +36,7 @@ public class TradeMapper {
                 .build();
     }
 
+    // Aktualizuje pola istniejącej encji Trade na podstawie nowego żądania DTO
     public void updateEntity(Trade trade, TradeRequest request, Playbook playbook) {
         trade.setTicker(request.getTicker().toUpperCase());
         trade.setDirection(request.getDirection());
@@ -54,6 +57,7 @@ public class TradeMapper {
         trade.setPostTradeReview(request.getPostTradeReview());
     }
 
+    // Konwertuje encję Trade na DTO odpowiedzi API. Dolicza obliczone P&L oraz flagę open
     public TradeResponse toResponse(Trade trade) {
         return TradeResponse.builder()
                 .id(trade.getId())
@@ -81,6 +85,8 @@ public class TradeMapper {
                 .build();
     }
 
+    // Liczy zysk/stratę transakcji. Dla pozycji SHORT mnożnik jest odwrócony,
+    // tak żeby spadek ceny dawał dodatni P&L. Zwraca null dla pozycji jeszcze otwartych
     private Double calculatePnl(Trade trade) {
         if (trade.getExitPrice() == null) {
             return null;
@@ -89,10 +95,12 @@ public class TradeMapper {
         return (trade.getExitPrice() - trade.getEntryPrice()) * trade.getPositionSize() * multiplier;
     }
 
+    // Pomocnicza — null-safe odczyt ID powiązanego playbooka
     private java.util.UUID getPlaybookId(Trade trade) {
         return trade.getPlaybook() != null ? trade.getPlaybook().getId() : null;
     }
 
+    // Pomocnicza — null-safe odczyt tytułu powiązanego playbooka
     private String getPlaybookTitle(Trade trade) {
         return trade.getPlaybook() != null ? trade.getPlaybook().getTitle() : null;
     }

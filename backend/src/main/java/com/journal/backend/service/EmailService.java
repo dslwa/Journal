@@ -16,10 +16,13 @@ public class EmailService {
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    // Konstruktor — wstrzykuje sender SMTP Springa skonfigurowany w application.properties
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
+    // Wysyła email z linkiem do resetu hasła. Link zawiera token jednorazowy (ważny 1h)
+    // i prowadzi do strony /reset-password we frontendzie
     public void sendPasswordResetEmail(String toEmail, String token) {
         String resetLink = frontendUrl + "/reset-password?token=" + token;
 
@@ -32,6 +35,7 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    // Pomocnicza — buduje treść tekstową emaila z linkiem resetowym (text block Java 17)
     private String buildPasswordResetEmailText(String resetLink) {
         return """
                 Hello,

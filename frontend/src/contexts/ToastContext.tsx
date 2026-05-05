@@ -16,15 +16,18 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 let nextId = 0;
 
+// Provider toastów (powiadomień) — owijamy nim aplikację, by każdy komponent miał dostęp do showToast()
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Pokazuje powiadomienie z auto-zniknięciem po 3.5s. Każdy toast ma unikalny ID
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = ++nextId;
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
   }, []);
 
+  // Ręczne zamknięcie toastu po kliknięciu X
   const dismiss = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
@@ -72,6 +75,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Hook udostępniający funkcję showToast — rzuca błąd gdy użyty poza ToastProvider
 export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast must be used within ToastProvider');

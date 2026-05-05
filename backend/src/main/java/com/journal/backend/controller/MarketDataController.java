@@ -12,6 +12,8 @@ public class MarketDataController {
 
     private final MarketDataService marketDataService;
 
+    // GET /api/market/price/{symbol} — proxy do zewnętrznych API (Finnhub/ExchangeRate)
+    // zwracające aktualną cenę instrumentu. 404 jeśli zewnętrzne API nie odpowiedziało
     @GetMapping("/price/{symbol}")
     public ResponseEntity<PriceResponse> getPrice(@PathVariable String symbol) {
         Double price = marketDataService.getCurrentPrice(symbol);
@@ -21,5 +23,6 @@ public class MarketDataController {
         return ResponseEntity.ok(new PriceResponse(symbol, price));
     }
 
+    // DTO odpowiedzi z aktualną ceną instrumentu (record Java 17)
     public record PriceResponse(String symbol, Double price) {}
 }

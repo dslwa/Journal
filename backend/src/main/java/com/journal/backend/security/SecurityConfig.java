@@ -29,11 +29,16 @@ public class SecurityConfig {
     @Value("${app.frontend.url:}")
     private String frontendUrl;
 
+    // Tworzy bean do hashowania haseł użytkowników algorytmem BCrypt
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Konfiguruje łańcuch filtrów bezpieczeństwa: wyłącza CSRF (API bezstanowe),
+    // włącza CORS, ustawia sesje jako bezstanowe (STATELESS), definiuje reguły dostępu
+    // (endpointy auth i health publiczne, admin wymaga roli ADMIN, reszta wymaga uwierzytelnienia),
+    // obsługę błędów 401/403, oraz dodaje filtr JWT przed domyślnym filtrem logowania
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtUtil jwtUtil) throws Exception {
         http
@@ -58,6 +63,8 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // Konfiguruje politykę CORS — definiuje dozwolone originy (localhost, Vercel, Railway),
+    // dozwolone metody HTTP, nagłówki, oraz eksponuje nagłówek Authorization w odpowiedziach
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();

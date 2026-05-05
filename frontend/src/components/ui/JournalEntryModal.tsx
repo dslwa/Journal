@@ -13,6 +13,8 @@ interface Props {
   onDelete?: () => Promise<void>;
 }
 
+// Modal do tworzenia/edycji wpisu dziennika psychologicznego.
+// Pozwala wybrać nastrój (5 emoji), poziom energii (1-5) i wprowadzić notatki, lekcje, błędy
 export default function JournalEntryModal({ entry, date, onClose, onSave, onDelete }: Props) {
   const [mood, setMood] = useState<number | null>(entry?.mood ?? null);
   const [energy, setEnergy] = useState<number | null>(entry?.energy ?? null);
@@ -23,6 +25,7 @@ export default function JournalEntryModal({ entry, date, onClose, onSave, onDele
 
   useEscapeKey(onClose);
 
+  // Zapisuje wpis (upsert na backendzie) — flag saving zapobiega podwójnym kliknięciom
   const handleSave = async () => {
     setSaving(true);
     try {

@@ -5,6 +5,8 @@ import { AxiosError } from 'axios';
 
 type Mode = 'login' | 'register';
 
+// Strona logowania/rejestracji — przełączane zakładką w obrębie jednego komponentu.
+// Zawiera link do "Forgot password" przekierowujący na proces resetu hasła
 export default function AuthPage() {
   const [mode, setMode] = useState<Mode>('login');
   const [username, setUsername] = useState('');
@@ -15,6 +17,7 @@ export default function AuthPage() {
   const [err, setErr] = useState('');
   const navigate = useNavigate();
 
+  // Wysyła formularz logowania albo rejestracji, zapisuje JWT i przekierowuje na dashboard
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);

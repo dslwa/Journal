@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PlaybookMapper {
 
+    // Tworzy nową encję Playbook (strategię) na podstawie żądania DTO i przypisuje ją do użytkownika
     public Playbook toEntity(User user, PlaybookRequest request) {
         return Playbook.builder()
                 .user(user)
@@ -23,6 +24,7 @@ public class PlaybookMapper {
                 .build();
     }
 
+    // Aktualizuje pola istniejącej encji Playbook nowymi wartościami z żądania
     public void updateEntity(Playbook playbook, PlaybookRequest request) {
         playbook.setTitle(request.getTitle());
         playbook.setDescription(request.getDescription());
@@ -34,6 +36,7 @@ public class PlaybookMapper {
         playbook.setChecklist(request.getChecklist());
     }
 
+    // Konwertuje encję Playbook na DTO odpowiedzi API (z dodatkowym polem content dla zgodności)
     public PlaybookResponse toResponse(Playbook playbook) {
         return PlaybookResponse.builder()
                 .id(playbook.getId())
@@ -52,6 +55,7 @@ public class PlaybookMapper {
                 .build();
     }
 
+    // Pomocnicza — wybiera treść strategii: nowsze pole "content" ma pierwszeństwo nad starym "rules"
     private String resolveContent(PlaybookRequest request) {
         return request.getContent() != null ? request.getContent() : request.getRules();
     }

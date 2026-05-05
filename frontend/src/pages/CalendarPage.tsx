@@ -7,6 +7,9 @@ import { formatCurrency } from '@/utils/formatters';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { IMPACT_COLORS } from '@/constants';
 
+// Strona kalendarza — siatka miesięczna z transakcjami i wydarzeniami makroekonomicznymi.
+// Każdy dzień pokazuje sumę P&L (kolorowany pasek) i ikony wpływu eventów; klik otwiera modal
+// z detalami dnia. Filtrowanie eventów po kraju (USD, EUR, GBP, ...)
 export default function CalendarPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,12 +22,14 @@ export default function CalendarPage() {
   useEffect(() => { loadMacroEvents(); }, [currentDate]);
   useEscapeKey(selectedDay ? () => setSelectedDay(null) : null);
 
+  // Ładuje listę transakcji użytkownika (jednorazowo przy montowaniu)
   const loadTrades = async () => {
     setLoading(true);
     try { const res = await apiListTrades(); setTrades(res.data); }
     finally { setLoading(false); }
   };
 
+  // Ładuje wydarzenia makro dla aktualnie wyświetlanego miesiąca (przeładowuje przy zmianie miesiąca)
   const loadMacroEvents = async () => {
     try {
       const year = currentDate.getFullYear();
@@ -40,6 +45,7 @@ export default function CalendarPage() {
   const allCountries = [...new Set(macroEvents.map(e => e.country).filter(Boolean))].sort() as string[];
   const filteredEvents = selectedCountries.size === 0 ? macroEvents : macroEvents.filter(e => e.country && selectedCountries.has(e.country));
 
+  // Włącza/wyłącza filtr po kraju (multi-select — można wybrać kilka walut)
   const toggleCountry = (country: string) => {
     setSelectedCountries(prev => {
       const next = new Set(prev);
@@ -48,11 +54,13 @@ export default function CalendarPage() {
     });
   };
 
+  // Zwraca eventy makro dla danego dnia (dopasowane po stringu YYYY-MM-DD aby uniknąć problemów ze strefą czasową)
   const getEventsForDay = (date: Date) => {
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     return filteredEvents.filter(e => e.eventDate === dateStr);
   };
 
+  // Wybiera najwyższy poziom wpływu z listy eventów (do pokazania jednej kropki, gdy eventów jest >3)
   const getHighestImpact = (events: MacroEvent[]) => {
     if (events.some(e => e.impact === 'High')) return 'High';
     if (events.some(e => e.impact === 'Medium')) return 'Medium';
@@ -61,6 +69,7 @@ export default function CalendarPage() {
 
   const impactColor = (impact: string | null) => IMPACT_COLORS[impact ?? ''] ?? IMPACT_COLORS.Low;
 
+  // Generuje tablicę dni miesiąca (z paddingiem na początku do wyrównania pierwszego dnia tygodnia)
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -72,12 +81,14 @@ export default function CalendarPage() {
     return days;
   };
 
+  // Zwraca transakcje otwarte w danym dniu (porównanie po dniu/miesiącu/roku w lokalnej strefie czasowej)
   const getTradesForDay = (date: Date) =>
     trades.filter(t => {
       const d = new Date(t.openedAt);
       return d.getDate() === date.getDate() && d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear();
     });
 
+  // Statystyki dnia: ilość, P&L (tylko zamknięte), ilość wygranych/przegranych
   const getDayStats = (date: Date) => {
     const dayTrades = getTradesForDay(date);
     const closed = dayTrades.filter(t => t.exitPrice !== null && t.entryPrice !== null && t.positionSize !== null);
@@ -85,6 +96,7 @@ export default function CalendarPage() {
     return { totalTrades: dayTrades.length, closedTrades: closed.length, totalPL, wins: closed.filter(t => calculatePL(t) > 0).length, losses: closed.filter(t => calculatePL(t) < 0).length };
   };
 
+  // Kolor paska na dole komórki dnia: zielony=zysk, czerwony=strata, szary=BE/otwarte
   const getDayColor = (date: Date) => {
     const s = getDayStats(date);
     if (s.closedTrades === 0) return s.totalTrades > 0 ? 'bg-slate-600' : '';
@@ -93,6 +105,7 @@ export default function CalendarPage() {
     return 'bg-slate-600';
   };
 
+  // Przyciski nawigacji miesiąca — zmiana wywołuje useEffect przeładowujący eventy makro
   const previousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   const goToToday = () => setCurrentDate(new Date());

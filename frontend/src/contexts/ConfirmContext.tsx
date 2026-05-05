@@ -13,11 +13,14 @@ interface ConfirmContextValue {
 
 const ConfirmContext = createContext<ConfirmContextValue | null>(null);
 
+// Provider modali potwierdzenia — zastępuje natywne window.confirm() własnym, ładnym modalem.
+// Używany np. przed usunięciem transakcji lub strategii
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const resolveRef = useRef<((value: boolean) => void) | null>(null);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Otwiera modal i zwraca Promise — rozwiązany dopiero po kliknięciu przez użytkownika
   const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
     setOptions(opts);
     return new Promise((resolve) => {
@@ -25,6 +28,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Rozwiązuje Promise z wynikiem (true/false) i zamyka modal
   const handleResult = useCallback((result: boolean) => {
     resolveRef.current?.(result);
     setOptions(null);
@@ -89,6 +93,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Hook udostępniający funkcję confirm() — rzuca błąd gdy użyty poza ConfirmProvider
 export function useConfirm(): ConfirmContextValue {
   const ctx = useContext(ConfirmContext);
   if (!ctx) throw new Error('useConfirm must be used within ConfirmProvider');

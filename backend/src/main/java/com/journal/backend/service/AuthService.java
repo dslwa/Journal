@@ -31,6 +31,8 @@ public class AuthService {
     @Value("${admin.username:}")
     private String adminUsername;
 
+    // Rejestruje nowego użytkownika — sprawdza unikalność emaila, hashuje hasło,
+    // zapisuje użytkownika w bazie i zwraca token JWT wraz z danymi użytkownika
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException();
@@ -46,6 +48,9 @@ public class AuthService {
         return new AuthResponse(token, user.getEmail(), user.getUsername(), user.getRole().name());
     }
 
+    // Loguje użytkownika — weryfikuje email i hasło, sprawdza czy konto nie jest zablokowane,
+    // automatycznie promuje do roli ADMIN jeśli nazwa użytkownika pasuje do konfiguracji,
+    // generuje i zwraca token JWT
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
@@ -69,6 +74,9 @@ public class AuthService {
         return new AuthResponse(token, user.getEmail(), user.getUsername(), user.getRole().name());
     }
 
+    // Obsługuje żądanie resetu hasła — generuje unikalny token resetowy (ważny 1h),
+    // zapisuje go w bazie i wysyła email z linkiem do resetu.
+    // Zawsze zwraca sukces, aby zapobiec wyliczaniu adresów email
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
         var userOpt = userRepository.findByEmail(request.email());
@@ -93,6 +101,8 @@ public class AuthService {
         emailService.sendPasswordResetEmail(user.getEmail(), token);
     }
 
+    // Resetuje hasło użytkownika na podstawie tokenu resetowego — weryfikuje ważność tokenu,
+    // ustawia nowe zahashowane hasło i oznacza token jako użyty
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         var resetToken = passwordResetTokenRepository.findByToken(request.token())

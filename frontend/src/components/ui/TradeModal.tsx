@@ -10,11 +10,13 @@ import { toLocalInputValue, fromLocalInputValue } from '@/utils/formatters';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { POPULAR_TICKERS } from '@/constants';
 
+// Parsuje JSON-checklistę z transakcji ([{label, checked}, ...]). Bezpieczny na błędne JSON-y
 function parseChecklist(json: string | null | undefined): ChecklistItem[] {
   if (!json) return [];
   try { const p = JSON.parse(json); return Array.isArray(p) ? p : []; } catch { return []; }
 }
 
+// Konwertuje listę etykiet z playbooka (["Trend ok", "Volume ok"]) na checklistę z polami checked=false
 function checklistFromPlaybook(checklist: string | null | undefined): ChecklistItem[] {
   if (!checklist) return [];
   try { const labels: string[] = JSON.parse(checklist); return Array.isArray(labels) ? labels.map(label => ({ label, checked: false })) : []; } catch { return []; }
@@ -33,6 +35,9 @@ type Editable = Omit<Trade, 'id' | 'attachments'> & { id?: UUID };
 const inputCls = `w-full bg-surface border border-border-primary text-slate-100 px-3 py-2.5
   rounded-lg text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 placeholder:text-slate-500`;
 
+// Główny modal do tworzenia/edycji transakcji. Zawiera m.in. autouzupełnianie tickerów,
+// auto-pobieranie ceny z API, kalkulację rozmiaru pozycji na podstawie ryzyka,
+// dynamiczną checklistę z playbooka oraz upload załączników graficznych
 export default function TradeModal({ trade, onClose, onSaved, onDeleted, currentBalance = 10000 }: Props) {
   const isNew = !trade?.id;
   const { showToast } = useToast();
@@ -70,9 +75,14 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
   const [showTickerSuggestions, setShowTickerSuggestions] = useState(false);
   const [fetchingPrice, setFetchingPrice] = useState(false);
 
+  // Pobiera listę playbooków przy otwarciu modala (do dropdownu wyboru strategii)
   useEffect(() => { apiListPlaybook().then(res => setPlaybooks(res.data)).catch(() => {}); }, []);
+  // Synchronizuje załączniki gdy zmieni się prop trade (np. po zapisie z dorzuconymi plikami)
   useEffect(() => { setAttachments(trade?.attachments ?? []); }, [trade?.attachments]);
 
+  // Auto-kalkulacja rozmiaru pozycji wg formuły risk-based:
+  // (saldo * %ryzyka) / |cena wejścia - stop loss| → dokładnie taki rozmiar pozycji,
+  // żeby zgodnie z position sizingiem stracić X% kapitału przy stop lossie
   useEffect(() => {
     const { entryPrice, stopLoss, riskPercent } = data;
     if (entryPrice && stopLoss && riskPercent && currentBalance) {
@@ -84,17 +94,21 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
 
   useEscapeKey(onClose);
 
+  // Pomocnicza — typesafe setter pojedynczego pola formularza
   const update = <K extends keyof Editable>(key: K, value: Editable[K]) =>
     setData(d => ({ ...d, [key]: value }));
 
+  // Handler wyboru plików — dodaje je do kolejki uploadów (faktyczny upload przy zapisie)
   const onPickFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length) setFilesToUpload(prev => prev.concat(files));
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Usuwa plik z kolejki (przed wysłaniem na serwer)
   const removePendingFile = (idx: number) => setFilesToUpload(prev => prev.filter((_, i) => i !== idx));
 
+  // Usuwa już zapisany załącznik z transakcji (kasuje plik na backendzie)
   const deleteAttachment = async (att: Attachment) => {
     if (!data.id) return;
     setBusy(true);
@@ -106,6 +120,8 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
     finally { setBusy(false); }
   };
 
+  // Główna funkcja zapisu — tworzy lub aktualizuje transakcję, następnie wgrywa
+  // ewentualne nowe załączniki w drugim żądaniu (multipart). Po sukcesie zamyka modal
   const save = async () => {
     setBusy(true);
     try {
@@ -138,12 +154,14 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
     finally { setBusy(false); }
   };
 
+  // Usuwa transakcję po potwierdzeniu w modalu confirm (dwustopniowa zgoda)
   const removeTrade = async () => {
     if (!onDeleted || !data.id) return;
     const confirmed = await confirm({ title: 'Delete Trade', message: 'Are you sure? This action cannot be undone.', confirmText: 'Delete', confirmVariant: 'danger' });
     if (confirmed) onDeleted(data.id);
   };
 
+  // Pobiera aktualną cenę instrumentu z backendu (Finnhub/ExchangeRate) i wstawia do entryPrice
   const fetchCurrentPrice = async () => {
     if (!data.ticker) { showToast('Enter a ticker first', 'error'); return; }
     setFetchingPrice(true);
@@ -355,6 +373,7 @@ export default function TradeModal({ trade, onClose, onSaved, onDeleted, current
   );
 }
 
+// Pomocniczy komponent owijający label + pole formularza w spójny layout
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">

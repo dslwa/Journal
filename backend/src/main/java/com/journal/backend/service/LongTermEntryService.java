@@ -21,6 +21,7 @@ public class LongTermEntryService {
     private final LongTermEntryRepository longTermEntryRepository;
     private final UserRepository userRepository;
 
+    // Pobiera wszystkie wpisy długoterminowe użytkownika posortowane od ostatnio aktualizowanego
     @Transactional(readOnly = true)
     public List<LongTermEntryResponse> list(String email) {
         User user = getUser(email);
@@ -30,6 +31,8 @@ public class LongTermEntryService {
                 .toList();
     }
 
+    // Tworzy nowy wpis długoterminowy (temat, watchlist, cel lub przegląd) z pełnymi danymi:
+    // teza, plan wejścia, warunki unieważnienia, horyzont, data docelowa
     @Transactional
     public LongTermEntryResponse create(String email, LongTermEntryRequest request) {
         User user = getUser(email);
@@ -49,6 +52,7 @@ public class LongTermEntryService {
         return toResponse(longTermEntryRepository.save(entry));
     }
 
+    // Aktualizuje istniejący wpis długoterminowy — nadpisuje wszystkie pola nowymi wartościami
     @Transactional
     public LongTermEntryResponse update(String email, UUID id, LongTermEntryRequest request) {
         LongTermEntry entry = getUserEntry(email, id);
@@ -65,23 +69,27 @@ public class LongTermEntryService {
         return toResponse(longTermEntryRepository.save(entry));
     }
 
+    // Usuwa wpis długoterminowy po weryfikacji przynależności do użytkownika
     @Transactional
     public void delete(String email, UUID id) {
         LongTermEntry entry = getUserEntry(email, id);
         longTermEntryRepository.delete(entry);
     }
 
+    // Pomocnicza — pobiera użytkownika po emailu
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", email));
     }
 
+    // Pomocnicza — pobiera wpis długoterminowy należący do użytkownika
     private LongTermEntry getUserEntry(String email, UUID id) {
         User user = getUser(email);
         return longTermEntryRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("LongTermEntry", id));
     }
 
+    // Pomocnicza — konwertuje encję LongTermEntry na obiekt odpowiedzi API
     private LongTermEntryResponse toResponse(LongTermEntry entry) {
         return LongTermEntryResponse.builder()
                 .id(entry.getId())

@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+// Pomocnicza — dekoduje payload JWT (base64) i wyciąga rolę użytkownika.
+// Używane tylko do warunkowego pokazania linku do panelu admina (autoryzację robi backend)
 function getJwtRole(): string | null {
   try {
     const token = localStorage.getItem('jwt');
@@ -114,19 +116,24 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+// Sidebar nawigacyjny — lista linków do wszystkich modułów aplikacji.
+// Dla użytkowników z rolą ADMIN dodaje pozycję "Admin"
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = useMemo(() => getJwtRole() === 'ADMIN', []);
 
+  // Memoized lista pozycji menu (uwzględnia rolę admina)
   const items = useMemo(
     () => (isAdmin ? [...navItems, adminItem] : navItems),
     [isAdmin],
   );
 
+  // Aktualnie podświetlona pozycja menu, na podstawie ścieżki URL
   const activeId =
     items.find((item) => location.pathname === item.path)?.id ?? 'journal';
 
+  // Wylogowuje użytkownika — usuwa token JWT i wraca na ekran logowania
   const logout = () => {
     localStorage.removeItem('jwt');
     navigate('/');

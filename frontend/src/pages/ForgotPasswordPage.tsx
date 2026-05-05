@@ -3,12 +3,15 @@ import { apiForgotPassword } from '@/api/client';
 import { Link } from 'react-router-dom';
 import { AxiosError } from 'axios';
 
+// Strona "Forgot password" — formularz pierwszego kroku resetu hasła.
+// Wysyła email z linkiem resetowym (token ważny 1h, generowany przez backend)
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
 
+  // Wysyła żądanie resetu hasła. Backend zawsze zwraca sukces (anty-enumeracja emaili)
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');

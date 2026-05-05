@@ -33,6 +33,9 @@ public class FileController {
     @Value("${app.upload.dir}")
     private String uploadDir;
 
+    // GET /files/{filename} — serwuje plik z katalogu uploadów. Wymaga uwierzytelnienia
+    // i sprawdza, czy zalogowany użytkownik jest właścicielem zasobu (transakcji lub playbooka).
+    // Dodatkowo zabezpieczone przed path-traversal — ścieżka musi mieścić się w katalogu uploadu
     @GetMapping("/files/{filename:.+}")
     public ResponseEntity<Resource> serveFile(
             @PathVariable String filename,

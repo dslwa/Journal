@@ -30,6 +30,7 @@ public class PlaybookService {
     private final PlaybookMapper playbookMapper;
     private final FileUploadService fileUploadService;
 
+    // Pobiera listę wszystkich playbooków (strategii) użytkownika posortowanych od najnowszego
     @Transactional(readOnly = true)
     public List<PlaybookResponse> list(String email) {
         User user = getUser(email);
@@ -39,6 +40,7 @@ public class PlaybookService {
                 .toList();
     }
 
+    // Tworzy nowy playbook (strategię) dla użytkownika i zapisuje go w bazie
     @Transactional
     public PlaybookResponse create(String email, PlaybookRequest request) {
         User user = getUser(email);
@@ -46,6 +48,7 @@ public class PlaybookService {
         return playbookMapper.toResponse(playbookRepository.save(playbook));
     }
 
+    // Aktualizuje istniejący playbook — weryfikuje przynależność do użytkownika i zapisuje zmiany
     @Transactional
     public PlaybookResponse update(String email, UUID id, PlaybookRequest request) {
         Playbook playbook = getUserPlaybook(email, id);
@@ -53,6 +56,8 @@ public class PlaybookService {
         return playbookMapper.toResponse(playbookRepository.save(playbook));
     }
 
+    // Przesyła obraz ilustracyjny do playbooka — waliduje typ pliku, zapisuje na dysku
+    // i aktualizuje URL obrazka w playbooku
     @Transactional
     public String uploadImage(String email, UUID id, MultipartFile image) throws IOException {
         Playbook playbook = getUserPlaybook(email, id);
@@ -62,17 +67,20 @@ public class PlaybookService {
         return url;
     }
 
+    // Usuwa playbook użytkownika po weryfikacji przynależności
     @Transactional
     public void delete(String email, UUID id) {
         Playbook playbook = getUserPlaybook(email, id);
         playbookRepository.delete(playbook);
     }
 
+    // Pomocnicza — pobiera użytkownika po emailu, rzuca wyjątek jeśli nie znaleziono
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", email));
     }
 
+    // Pomocnicza — pobiera playbook należący do użytkownika, rzuca wyjątek jeśli nie istnieje
     private Playbook getUserPlaybook(String email, UUID playbookId) {
         User user = getUser(email);
         return playbookRepository.findByIdAndUserId(playbookId, user.getId())

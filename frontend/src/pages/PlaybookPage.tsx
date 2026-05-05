@@ -15,6 +15,9 @@ const AUTO_RETRY_DELAY_MS = 2000;
 const inputCls = `w-full bg-surface border border-border-primary text-slate-100 px-3 py-2.5
   rounded-lg text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 placeholder:text-slate-500`;
 
+// Strona Playbook — biblioteka strategii tradingowych. Każda strategia to wpis z tytułem,
+// tagami, checklistą pre-trade, treścią markdown i opcjonalnym obrazkiem (dragging-drop).
+// Edytor markdown z podglądem live, auto-retry przy starcie backendu (Railway cold start)
 export default function PlaybookPage() {
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +38,9 @@ export default function PlaybookPage() {
 
   const [form, setForm] = useState({ title: '', description: '', content: '', tags: '', imageUrl: '', checklist: '[]' });
 
+  // Bezpiecznie wyciąga treść markdown (zabezpieczenie przed nullem/innym typem z backendu)
   const getPlaybookContent = (pb: Playbook) => typeof pb.content === 'string' ? pb.content : '';
+  // Skraca treść do 200 znaków na podgląd w karcie strategii
   const getPreviewContent = (pb: Playbook) => {
     const content = getPlaybookContent(pb);
     return content.length > 200 ? `${content.slice(0, 200)}...` : content;
@@ -49,12 +54,14 @@ export default function PlaybookPage() {
   }, []);
   useEscapeKey(showModal ? closeModal : null);
 
+  // Filtruje strategie po wyszukiwarce (tytuł, opis, tagi)
   const filteredPlaybooks = useMemo(() => {
     if (!searchQuery) return playbooks;
     const q = searchQuery.toLowerCase();
     return playbooks.filter(p => p.title.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q) || p.tags?.toLowerCase().includes(q));
   }, [playbooks, searchQuery]);
 
+  // Generuje czytelny komunikat błędu dla widoku ładowania (z info o retry przy cold-starcie)
   const getLoadErrorMessage = (err: unknown, willRetry: boolean) => {
     const axErr = err as AxiosError<{ message?: string }>;
     const status = axErr?.response?.status;
@@ -69,11 +76,13 @@ export default function PlaybookPage() {
     return apiMessage || axErr?.message || 'Failed to load strategies.';
   };
 
+  // Decyduje, czy ponawiać request — tylko dla błędów sieciowych/502 (cold start)
   const shouldRetryLoad = (err: unknown) => {
     const axErr = err as AxiosError;
     return axErr?.response?.status === 502 || axErr?.code === 'ERR_NETWORK' || !axErr?.response;
   };
 
+  // Ładuje listę strategii z auto-retry (do 3 prób z 2s opóźnieniem)
   const loadPlaybooks = async (attempt = 0) => {
     if (retryTimeoutRef.current !== null) {
       window.clearTimeout(retryTimeoutRef.current);
@@ -95,22 +104,28 @@ export default function PlaybookPage() {
     } finally { setLoading(false); }
   };
 
+  // Manualne ponowne ładowanie (przycisk "Retry now")
   const retryLoad = () => { void loadPlaybooks(); };
 
+  // Otwiera modal w trybie tworzenia nowej strategii
   const openNew = () => {
     setForm({ title: '', description: '', content: '', tags: '', imageUrl: '', checklist: '[]' });
     setNewChecklistItem(''); setIsEditing(false); setIsViewMode(false); setPreviewTab('edit'); setShowModal(true);
   };
 
+  // Otwiera modal w trybie podglądu (read-only z wyrenderowanym markdownem)
   const openView = (pb: Playbook) => { setSelectedPlaybook(pb); setIsEditing(false); setIsViewMode(true); setShowModal(true); };
 
+  // Otwiera modal w trybie edycji — ładuje pola formularza z istniejącej strategii
   const openEdit = (pb: Playbook) => {
     setForm({ title: pb.title, description: pb.description || '', content: getPlaybookContent(pb), tags: pb.tags || '', imageUrl: pb.imageUrl || '', checklist: pb.checklist || '[]' });
     setNewChecklistItem(''); setSelectedPlaybook(pb); setIsEditing(true); setIsViewMode(false); setPreviewTab('edit'); setShowModal(true);
   };
 
+  // Zamyka modal i resetuje state
   function closeModal() { setShowModal(false); setSelectedPlaybook(null); setIsViewMode(false); }
 
+  // Obsługa pliku obrazka — przy edycji upload od razu na backend, przy tworzeniu jako blob URL (ostateczny upload po zapisie)
   const processImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) { showToast('Please select an image file', 'error'); return; }
     if (isEditing && selectedPlaybook) {
@@ -123,8 +138,10 @@ export default function PlaybookPage() {
     }
   };
 
+  // Obsługa drag&drop pliku obrazka do strefy upload
   const handleDrop = async (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) await processImageFile(f); };
 
+  // Zapisuje strategię (PUT przy edycji, POST przy nowej; po POST uploaduje obrazek jeśli był blob)
   const savePlaybook = async () => {
     try {
       if (isEditing && selectedPlaybook) {
@@ -144,6 +161,7 @@ export default function PlaybookPage() {
     } catch { showToast('Failed to save strategy', 'error'); }
   };
 
+  // Usuwa strategię po potwierdzeniu w modalu
   const deletePlaybook = async (id: UUID) => {
     const confirmed = await confirm({ title: 'Delete Strategy', message: 'Are you sure? This action cannot be undone.', confirmText: 'Delete', confirmVariant: 'danger' });
     if (!confirmed) return;
@@ -151,6 +169,7 @@ export default function PlaybookPage() {
     catch { showToast('Failed to delete strategy', 'error'); }
   };
 
+  // Dodaje pozycję do checklisty pre-trade (przechowywanej w polu jako JSON-string)
   const addChecklistItem = () => {
     if (!newChecklistItem.trim()) return;
     try { const items: string[] = JSON.parse(form.checklist); items.push(newChecklistItem.trim()); setForm({ ...form, checklist: JSON.stringify(items) }); }
@@ -158,11 +177,13 @@ export default function PlaybookPage() {
     setNewChecklistItem('');
   };
 
+  // Usuwa pozycję checklisty po indeksie (parsuje JSON, modyfikuje, serializuje z powrotem)
   const removeChecklistItem = (idx: number) => {
     try { const items: string[] = JSON.parse(form.checklist); items.splice(idx, 1); setForm({ ...form, checklist: JSON.stringify(items) }); }
     catch { /* ignore */ }
   };
 
+  // Bezpiecznie parsuje JSON z checklisty (zwraca pustą tablicę przy błędzie)
   const getChecklistItems = (): string[] => { try { return JSON.parse(form.checklist); } catch { return []; } };
 
   return (

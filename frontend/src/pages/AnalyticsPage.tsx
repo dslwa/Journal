@@ -15,6 +15,9 @@ const GRID = '#2d3748';
 const AXIS = '#6b7280';
 const tooltipStyle = { background: '#16191f', border: '1px solid #2d3748', borderRadius: 8, color: '#e2e8f0' };
 
+// Strona analityki — wyświetla zaawansowane metryki tradingowe (Win Rate, Profit Factor, Sharpe,
+// Max Drawdown, Expectancy), krzywą kapitału, rozkład wygranych/przegranych po dniach tygodnia,
+// taktykach (playbook) i tagach. Wszystkie wykresy z Recharts
 export default function AnalyticsPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [initialBalance, setInitialBalance] = useState(0);

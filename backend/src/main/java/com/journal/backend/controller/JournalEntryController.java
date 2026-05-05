@@ -18,6 +18,8 @@ public class JournalEntryController {
 
     private final JournalEntryService journalEntryService;
 
+    // GET /api/journal — lista wpisów dziennika psychologicznego użytkownika.
+    // Opcjonalne parametry from/to pozwalają zawęzić zakres dat (używane np. w kalendarzu)
     @GetMapping
     public ResponseEntity<List<JournalEntryDto>> list(
             Authentication auth,
@@ -30,6 +32,7 @@ public class JournalEntryController {
         return ResponseEntity.ok(journalEntryService.listForUser(email));
     }
 
+    // GET /api/journal/{date} — pobiera wpis dziennika dla wybranej daty (404 jeśli brak)
     @GetMapping("/{date}")
     public ResponseEntity<JournalEntryDto> getByDate(
             Authentication auth,
@@ -38,6 +41,7 @@ public class JournalEntryController {
         return ResponseEntity.ok(journalEntryService.getByDate(email, date));
     }
 
+    // POST /api/journal — upsert wpisu dziennika dla podanej daty (tworzy lub aktualizuje)
     @PostMapping
     public ResponseEntity<JournalEntryDto> createOrUpdate(
             Authentication auth,
@@ -46,6 +50,7 @@ public class JournalEntryController {
         return ResponseEntity.ok(journalEntryService.createOrUpdate(email, dto));
     }
 
+    // DELETE /api/journal/{date} — usuwa wpis dziennika z wybranej daty
     @DeleteMapping("/{date}")
     public ResponseEntity<Void> delete(
             Authentication auth,

@@ -11,6 +11,8 @@ import { formatDate } from '@/utils/formatters';
 
 type SortKey = 'date' | 'ticker' | 'pl' | 'size';
 
+// Główna strona po zalogowaniu — pulpit z saldem konta, statystykami (P&L, win rate),
+// filtrowalna i sortowalna tabela ostatnich transakcji oraz modale do dodawania/edycji
 export default function Dashboard() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -28,6 +30,7 @@ export default function Dashboard() {
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
+  // Pobiera równolegle profil użytkownika i listę transakcji (Promise.all dla szybszego ładowania)
   const reload = async () => {
     setLoading(true);
     try {
@@ -41,6 +44,7 @@ export default function Dashboard() {
 
   useEffect(() => { reload(); }, []);
 
+  // Liczy statystyki: łączny P&L, win rate, aktualne saldo (saldo początkowe + P&L)
   const stats = useMemo(() => {
     const initialBalance = me?.initialBalance ?? 10000;
     if (!trades.length) return { totalPL: 0, winRate: 0, totalTrades: 0, wins: 0, losses: 0, currentBalance: initialBalance, initialBalance };
@@ -60,6 +64,7 @@ export default function Dashboard() {
     };
   }, [trades, me]);
 
+  // Filtruje transakcje wg wyszukiwarki (ticker/notatki), kierunku (long/short) i wyniku (win/loss/BE)
   const filteredTrades = useMemo(() => {
     return trades.filter(t => {
       if (searchQuery) {
@@ -81,6 +86,7 @@ export default function Dashboard() {
     });
   }, [trades, searchQuery, directionFilter, resultFilter]);
 
+  // Sortuje przefiltrowane transakcje wg wybranej kolumny (data/ticker/P&L/wielkość pozycji)
   const sortedTrades = useMemo(() => {
     const sorted = [...filteredTrades];
     sorted.sort((a, b) => {
@@ -96,18 +102,22 @@ export default function Dashboard() {
     return sorted;
   }, [filteredTrades, sortKey, sortDir]);
 
+  // Klik w nagłówek kolumny — przełącza kierunek sortowania albo zmienia kolumnę
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir(key === 'ticker' ? 'asc' : 'desc'); }
   };
 
+  // Zwraca strzałkę pokazującą kierunek sortowania (lub podwójną strzałkę dla nieaktywnej kolumny)
   const sortIcon = (key: SortKey) => {
     if (sortKey !== key) return ' \u21C5';
     return sortDir === 'asc' ? ' \u2191' : ' \u2193';
   };
 
+  // Callback po zapisie z modala — odświeża listę transakcji i pokazuje toast
   const onSaved = async () => { await reload(); showToast('Trade saved'); };
 
+  // Usuwa transakcję po potwierdzeniu w modalu (kasuje też wszystkie załączniki na backendzie)
   const onDeleted = async (id: UUID) => {
     const confirmed = await confirm({ title: 'Delete Trade?', message: 'This will permanently delete this trade and its attachments.', confirmText: 'Delete', confirmVariant: 'danger' });
     if (!confirmed) return;
@@ -115,6 +125,7 @@ export default function Dashboard() {
     catch { showToast('Failed to delete trade', 'error'); }
   };
 
+  // Aktualizuje saldo początkowe konta (zmiana kapitału startowego liczonego do P&L)
   const updateBalance = async (newBalance: number) => {
     const res = await apiUpdateBalance(newBalance);
     setMe(res.data);
@@ -365,6 +376,7 @@ export default function Dashboard() {
   );
 }
 
+// Karta z pojedynczą statystyką (label + wartość + trend up/down) — używana w siatce u góry strony
 function StatCard({ label, value, subtitle, trend }: {
   label: string; value: string; subtitle?: string; trend?: 'up' | 'down';
 }) {

@@ -14,6 +14,8 @@ type Tab = 'users' | 'stats' | 'config';
 const inputCls = `w-full bg-surface border border-border-primary text-slate-100 px-3 py-2.5
   rounded-lg text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 placeholder:text-slate-500`;
 
+// Panel administracyjny — dostępny tylko dla użytkowników z rolą ADMIN.
+// 3 zakładki: lista użytkowników (disable/delete/reset hasła), statystyki systemu i edytor konfiguracji
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('users');
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -31,6 +33,7 @@ export default function AdminPage() {
   useEffect(() => { loadTab(); }, [tab]);
   useEscapeKey(resetPasswordUserId ? () => setResetPasswordUserId(null) : null);
 
+  // Ładuje dane dla aktywnej zakładki (przeładowuje przy każdej zmianie taba)
   const loadTab = async () => {
     setLoading(true);
     try {
@@ -40,6 +43,7 @@ export default function AdminPage() {
     } finally { setLoading(false); }
   };
 
+  // Toggle disabled na koncie użytkownika (zablokowani nie mogą się logować)
   const handleDisable = async (id: string, username: string, disabled: boolean) => {
     const action = disabled ? 'enable' : 'disable';
     const confirmed = await confirm({ title: `${disabled ? 'Enable' : 'Disable'} User?`, message: `Are you sure you want to ${action} "${username}"?`, confirmText: disabled ? 'Enable' : 'Disable', confirmVariant: disabled ? 'primary' : 'danger' });
@@ -48,6 +52,7 @@ export default function AdminPage() {
     catch { showToast(`Failed to ${action} user`, 'error'); }
   };
 
+  // Trwale usuwa konto użytkownika wraz ze wszystkimi danymi (transakcje, journal, playbook, ...)
   const handleDelete = async (id: string, username: string) => {
     const confirmed = await confirm({ title: 'Delete User?', message: `Delete user "${username}" and ALL their data? This cannot be undone.`, confirmText: 'Delete', confirmVariant: 'danger' });
     if (!confirmed) return;
@@ -55,23 +60,27 @@ export default function AdminPage() {
     catch { showToast('Failed to delete user', 'error'); }
   };
 
+  // Wymusza zmianę hasła użytkownika (admin override — bez emaila resetowego)
   const handleResetPassword = async () => {
     if (!resetPasswordUserId || !newPassword) return;
     try { await apiAdminResetPassword(resetPasswordUserId, newPassword); setResetPasswordUserId(null); setNewPassword(''); showToast('Password reset successfully'); }
     catch { showToast('Failed to reset password', 'error'); }
   };
 
+  // Zapisuje wszystkie wpisy konfiguracji systemu (key-value, np. limity, flagi feature toggle)
   const handleConfigSave = async () => {
     try { await apiAdminUpdateConfig(config); await loadTab(); showToast('Configuration saved'); }
     catch { showToast('Failed to save configuration', 'error'); }
   };
 
+  // Dodaje nowy wpis do listy konfiguracji (zapisany dopiero po Save Configuration)
   const handleAddConfig = () => {
     if (!newConfigKey.trim()) return;
     setConfig([...config, { key: newConfigKey.trim(), value: newConfigValue }]);
     setNewConfigKey(''); setNewConfigValue('');
   };
 
+  // Lokalna aktualizacja wartości konfiguracji w stanie (bez wysyłki na backend)
   const updateConfigValue = (key: string, value: string) =>
     setConfig(config.map(c => c.key === key ? { ...c, value } : c));
 

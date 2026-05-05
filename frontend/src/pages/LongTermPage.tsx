@@ -68,6 +68,9 @@ const EMPTY_FORM = {
 type FormState = typeof EMPTY_FORM;
 type CategoryFilter = 'ALL' | LongTermCategory;
 
+// Strona długoterminowego planowania — 4 kategorie wpisów (THEME, WATCHLIST, GOAL, REVIEW),
+// każdy ze statusem (active, on watch, building, completed, invalidated), tezą, planem triggera
+// i kryteriami invalidacji. Auto-retry przy starcie backendu (Railway cold start)
 export default function LongTermPage() {
   const [entries, setEntries] = useState<LongTermEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,6 +85,7 @@ export default function LongTermPage() {
   const { confirm } = useConfirm();
   const retryTimeoutRef = useRef<number | null>(null);
 
+  // Zamyka modal i resetuje formularz oraz tryb edycji
   const closeModal = () => {
     setShowModal(false);
     setEditingEntry(null);
@@ -97,6 +101,7 @@ export default function LongTermPage() {
 
   useEscapeKey(showModal ? closeModal : null);
 
+  // Filtruje wpisy po kategorii i wyszukiwarce (przeszukuje wszystkie pola tekstowe)
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
       if (categoryFilter !== 'ALL' && entry.category !== categoryFilter) return false;
@@ -115,6 +120,7 @@ export default function LongTermPage() {
     });
   }, [entries, categoryFilter, searchQuery]);
 
+  // Grupuje przefiltrowane wpisy po kategorii (do wyświetlenia w sekcjach)
   const groupedEntries = useMemo(() => {
     return CATEGORY_ORDER.map((category) => ({
       category,
@@ -122,6 +128,7 @@ export default function LongTermPage() {
     })).filter((group) => group.items.length > 0);
   }, [filteredEntries]);
 
+  // Liczy podsumowanie do kart u góry strony (ilość aktywnych w każdej kategorii)
   const summary = useMemo(() => ({
     activeThemes: entries.filter((entry) => entry.category === 'THEME' && entry.status === 'ACTIVE').length,
     watchlist: entries.filter((entry) => entry.category === 'WATCHLIST' && entry.status !== 'INVALIDATED').length,
@@ -129,6 +136,7 @@ export default function LongTermPage() {
     reviews: entries.filter((entry) => entry.category === 'REVIEW').length,
   }), [entries]);
 
+  // Generuje czytelny komunikat błędu — różny dla błędów sieci/cold-startu i pozostałych
   const getLoadErrorMessage = (err: unknown, willRetry: boolean) => {
     const axErr = err as AxiosError<{ message?: string }>;
     const status = axErr?.response?.status;
@@ -143,11 +151,13 @@ export default function LongTermPage() {
     return apiMessage || axErr?.message || 'Failed to load long-term entries.';
   };
 
+  // Decyduje, czy ponawiać request (tylko dla błędów sieciowych / 502 — czyli gdy backend wstaje)
   const shouldRetryLoad = (err: unknown) => {
     const axErr = err as AxiosError;
     return axErr?.response?.status === 502 || axErr?.code === 'ERR_NETWORK' || !axErr?.response;
   };
 
+  // Ładuje wpisy z auto-retry (do 3 prób z 2s opóźnieniem) dla cold-startu Railway
   const loadEntries = async (attempt = 0) => {
     if (retryTimeoutRef.current !== null) {
       window.clearTimeout(retryTimeoutRef.current);
@@ -173,14 +183,17 @@ export default function LongTermPage() {
     }
   };
 
+  // Manualne ponowne ładowanie (przycisk "Retry now" w widoku błędu)
   const retryLoad = () => { void loadEntries(); };
 
+  // Otwiera modal w trybie tworzenia nowego wpisu (opcjonalnie z preselected kategorią)
   const openNew = (category?: LongTermCategory) => {
     setEditingEntry(null);
     setForm({ ...EMPTY_FORM, category: category ?? 'THEME' });
     setShowModal(true);
   };
 
+  // Otwiera modal w trybie edycji — ładuje dane z istniejącego wpisu
   const openEdit = (entry: LongTermEntry) => {
     setEditingEntry(entry);
     setForm({
@@ -198,6 +211,7 @@ export default function LongTermPage() {
     setShowModal(true);
   };
 
+  // Zapisuje wpis (PUT dla edycji, POST dla nowego); puste stringi zamienia na null
   const saveEntry = async () => {
     try {
       const payload = {
@@ -226,6 +240,7 @@ export default function LongTermPage() {
     }
   };
 
+  // Usuwa wpis po potwierdzeniu w modalu
   const deleteEntry = async (id: UUID) => {
     const confirmed = await confirm({
       title: 'Delete Long-Term Entry',
@@ -244,6 +259,7 @@ export default function LongTermPage() {
     }
   };
 
+  // Formatuje datę YYYY-MM-DD na czytelną postać "Mar 15, 2026"
   const formatDate = (value: string | null) => {
     if (!value) return null;
     return new Date(`${value}T00:00:00`).toLocaleDateString('en-US', {
@@ -253,6 +269,7 @@ export default function LongTermPage() {
     });
   };
 
+  // Formatuje pełny timestamp (ISO 8601) na "Mar 15, 2026" — używane przy "Updated"
   const formatDateTime = (value: string) =>
     new Date(value).toLocaleDateString('en-US', {
       month: 'short',
@@ -260,6 +277,7 @@ export default function LongTermPage() {
       year: 'numeric',
     });
 
+  // Skraca długi tekst do podglądu (z trzema kropkami) — dla list i kart
   const getSnippet = (value: string | null | undefined, limit = 180) => {
     if (!value) return '';
     return value.length > limit ? `${value.slice(0, limit)}...` : value;
@@ -617,6 +635,7 @@ export default function LongTermPage() {
   );
 }
 
+// Karta statystyczna na górze strony (np. "Active Themes: 5")
 function StatCard({ label, value, helper }: { label: string; value: number; helper: string }) {
   return (
     <div className="bg-panel border border-border-primary rounded-xl p-4">
@@ -627,6 +646,7 @@ function StatCard({ label, value, helper }: { label: string; value: number; help
   );
 }
 
+// Przycisk filtra kategorii (chip) — aktywny ma podświetlone tło
 function FilterChip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
     <button
